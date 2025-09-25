@@ -7,7 +7,7 @@
 
 <br><br>
 
-![alt text](image-1.png)
+![alt text](image.png)
 
 ## 📌 프로젝트 개요
 
