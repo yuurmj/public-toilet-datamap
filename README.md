@@ -7,6 +7,7 @@
 
 <br><br>
 
+<div align=center>
 ![alt text](image.png)
 
 ## 📌 프로젝트 개요
@@ -52,6 +53,7 @@
   - 화장실 부족 지역 vs 적정 지역 분류 모델
   - 인구/유동인구 대비 화장실 수 기반 부족 지역 예측
   - Streamlit 대시보드와 연동해 확률 기반 시각화 제공
+  </div>
 
 ## 👋 Team Members
 
