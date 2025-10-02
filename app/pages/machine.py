@@ -7,10 +7,8 @@ import plotly.express as px
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
-
 @st.cache_data
 def load_data():
-
     data = pd.DataFrame({
         "dong": ["대연동","용호동","문현동","감만동","우암동"],
         "population": [30000, 45000, 20000, 15000, 5000],
@@ -18,13 +16,11 @@ def load_data():
         "toilets": [5, 7, 2, 1, 0],
         "accessible": [3, 4, 1, 0, 0]
     })
-
     data["toilet_ratio"] = data["toilets"] / data["population"]
-    data["label"] = (data["toilet_ratio"] < 0.0002).astype(int)  # 1=부족, 0=적정
+    data["label"] = (data["toilet_ratio"] < 0.0005).astype(int)
     return data
 
 df = load_data()
-
 
 X = df[["population","floating","toilets","accessible"]]
 y = df["label"]
@@ -35,24 +31,24 @@ model = RandomForestClassifier(random_state=42)
 model.fit(X_train, y_train)
 
 df["prediction"] = model.predict(X)
-df["probability"] = model.predict_proba(X)[:,1]  # 부족일 확률
-
+proba = model.predict_proba(X)
+if proba.shape[1] == 1:
+    df["probability"] = proba[:,0]
+else:
+    df["probability"] = proba[:,1]
 
 st.set_page_config(page_title="공중화장실 데이터맵", layout="wide")
 
 st.title("🚻 공중화장실 데이터맵 + 머신러닝 예측")
 
-
 st.subheader("📊 원본 데이터")
 st.dataframe(df)
-
 
 st.subheader("📈 행정동별 인구 대비 화장실 수")
 fig = px.bar(df, x="dong", y="toilet_ratio", color="label",
              labels={"dong":"행정동","toilet_ratio":"인구 대비 화장실 비율"},
              title="행정동별 화장실 비율 (빨강=부족, 파랑=적정)")
 st.plotly_chart(fig, use_container_width=True)
-
 
 coords = {
     "대연동": (35.133, 129.101),
@@ -84,7 +80,6 @@ for _, row in df.iterrows():
     ).add_to(m)
 
 st_folium(m, width=800, height=500)
-
 
 st.subheader("🃏 머신러닝 예측 카드")
 for _, row in df.iterrows():
