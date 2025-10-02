@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-from geopy.distance import geodesic
 import plotly.express as px
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -17,7 +16,8 @@ def load_data():
         "accessible": [3, 4, 1, 0, 0]
     })
     data["toilet_ratio"] = data["toilets"] / data["population"]
-    data["label"] = (data["toilet_ratio"] < 0.0005).astype(int)
+    threshold = data["toilet_ratio"].quantile(0.4)
+    data["label"] = (data["toilet_ratio"] < threshold).astype(int)
     return data
 
 df = load_data()
