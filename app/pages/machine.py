@@ -45,9 +45,15 @@ st.subheader("📊 원본 데이터")
 st.dataframe(df)
 
 st.subheader("📈 행정동별 인구 대비 화장실 수")
-fig = px.bar(df, x="dong", y="toilet_ratio", color="label",
-             labels={"dong":"행정동","toilet_ratio":"인구 대비 화장실 비율"},
-             title="행정동별 화장실 비율 (빨강=부족, 파랑=적정)")
+fig = px.bar(
+    df,
+    x="dong",
+    y="toilet_ratio",
+    color="probability",  # 부족 확률 기준으로 색상
+    color_continuous_scale=["green", "yellow", "red"],
+    labels={"dong":"행정동","toilet_ratio":"인구 대비 화장실 비율","probability":"부족 확률"},
+    title="행정동별 화장실 비율 (초록→빨강 그라데이션: 부족 확률)"
+)
 st.plotly_chart(fig, use_container_width=True)
 
 coords = {
