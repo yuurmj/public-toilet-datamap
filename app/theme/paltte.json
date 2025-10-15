@@ -1,0 +1,23 @@
+{
+  "base": {
+    "main1": "#BFA9F2",
+    "main2": "#8FDAC8",
+    "sub1": "#E7E1FF",
+    "sub2": "#D6F3E7",
+    "background": "#FAFAFB",
+    "border": "#E2E5EA"
+  },
+  "text": {
+    "heading": "#111827",
+    "main": "#374151",
+    "sub": "#9CA3AF",
+    "disabled": "#C6C8CE"
+  },
+  "status": {
+    "success": "#4ADE80",
+    "warning": "#FACC15",
+    "error":   "#F87171",
+    "info":    "#60A5FA"
+  },
+  "chart": ["#BFA9F2", "#8FDAC8", "#FBBF24", "#FCA5A5"]
+}
