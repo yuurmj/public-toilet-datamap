@@ -29,6 +29,25 @@ import streamlit.components.v1 as components
 
 # st.title("공공화장실 대시보드")
 
+coords_json = None
+sel_district = "전체"
+nearest_n = 5
+
+try:
+    base
+except NameError:
+    base = pd.DataFrame(columns=["lat", "lon", "name", "address", "access_score", "accessible", "open_24h"])
+
+PALETTE = {
+    "main1":    "#BFA9F2",
+    "main2":    "#8FDAC8",
+    "mainText": "#374151",
+    "heading":  "#111827",
+    "sub1":     "#E7E1FF",
+    "sub2":     "#D6F3E7",
+    "subText":  "#9CA3AF",
+    "bg":       "#FAFAFB",
+}
 
 
 # 위치 파싱 & 거리 계산
@@ -49,6 +68,27 @@ try:
 except Exception:
     pass
 
+
+st.markdown(f"""
+<style>
+.stApp {{ background: {PALETTE["bg"]}; color: {PALETTE["mainText"]}; }}
+h1, h2, h3, h4, h5, h6 {{ color: {PALETTE["heading"]}; }}
+section[data-testid="stSidebar"] {{
+  background: {PALETTE["sub1"]};
+  color: {PALETTE["mainText"]};
+  border-right: 1px solid {PALETTE["subText"]}22;
+}}
+label, .stMarkdown p, .stTextInput label {{ color: {PALETTE["mainText"]}; }}
+.stButton>button {{
+  background: linear-gradient(90deg, {PALETTE["main1"]}, {PALETTE["main2"]});
+  color: #111; border: 0; border-radius: 10px; padding: .6rem 1rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+}}
+.stButton>button:hover {{ filter: brightness(0.98); }}
+</style>
+""", unsafe_allow_html=True)
+
+
 st.subheader("지역별 화장실 지도")
 highlight_nearby = st.checkbox("내 주변 N개 하이라이트", value=True)
 
@@ -59,7 +99,7 @@ if sel_district != "전체" and not base.empty:
 if user_lat and user_lon:
     center_lat, center_lon = float(user_lat), float(user_lon)
 
-m = folium.Map(location=[center_lat, center_lon], zoom_start=13, tiles="OpenStreetMap")
+m = folium.Map(location=[center_lat, center_lon], zoom_start=13, tiles="CartoDB positron")
 
 # 사용자 위치 마커 + 반경 원(500m)
 if user_lat and user_lon:
