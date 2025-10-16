@@ -9,6 +9,35 @@ from scipy.stats import zscore
 
 st.set_page_config(page_title="공공화장실 데이터맵", layout="wide")
 
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f8f9fd;
+    }
+    .stSidebar {
+        background-color: #ffffff;
+    }
+    .css-1d391kg, .css-12oz5g7 {
+        background-color: #ffffff !important;
+    }
+    h1, h2, h3, h4 {
+        color: #243269 !important;
+    }
+    .stButton>button {
+        background-color: #4A6CF7;
+        color: white;
+        border-radius: 8px;
+    }
+    .stButton>button:hover {
+        background-color: #3957d1;
+        color: #ffffff;
+    }
+    .stDataFrame {
+        border-radius: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def load_data():
     toilets = pd.read_csv("data/toilets_mock.csv")
@@ -73,16 +102,19 @@ if need_accessible != "전체":
 
 m = folium.Map(location=DEFAULT_CENTER, zoom_start=13, control_scale=True, tiles="cartodbpositron")
 for _, r in filtered.iterrows():
+    icon_color = "purple" if r["accessible"]==1 else "blue"
     popup_html = f"""
-    <b>{r['name']}</b><br>
+    <b style='color:#4A6CF7'>{r['name']}</b><br>
     주소: {r['addr']}<br>
     구/동: {r['district']} / {r['dong']}<br>
     장애인 화장실: {'예' if r['accessible']==1 else '아니오'}<br>
     남녀 분리: {'예' if r['gender_sep']==1 else '아니오'}<br>
     운영시간: {r['open_time']}
     """
-    icon = folium.Icon(color="green" if r["accessible"]==1 else "blue", icon="info-sign")
-    folium.Marker(location=(r["lat"], r["lng"]), popup=popup_html, tooltip=r["name"], icon=icon).add_to(m)
+    folium.Marker(location=(r["lat"], r["lng"]),
+                  popup=popup_html,
+                  tooltip=r["name"],
+                  icon=folium.Icon(color=icon_color, icon="info-sign")).add_to(m)
 
 col1, col2 = st.columns([2, 1])
 
@@ -103,7 +135,7 @@ with col2:
     nearest_df = get_nearest(filtered, current_loc, k)
     if len(nearest_df) > 0:
         target = nearest_df.iloc[0]
-        st.markdown(f"### **{target['name']}**")
+        st.markdown(f"### **<span style='color:#4A6CF7'>{target['name']}</span>**", unsafe_allow_html=True)
         st.markdown(f"**주소:** {target['addr']}")
         st.markdown(f"**행정동:** {target['district']} {target['dong']}")
         st.markdown(f"**장애인 화장실:** {'✅ 있음' if target['accessible']==1 else '❌ 없음'}")
@@ -124,8 +156,11 @@ if len(agg)>0:
     else:
         chart_df = agg.copy()
     chart_df["label"] = chart_df["district"] + " " + chart_df["dong"]
-    fig1 = px.bar(chart_df.sort_values("toilets_count", ascending=False), x="label", y="toilets_count", title="행정동별 화장실 수")
-    fig1.update_layout(xaxis_title=None, yaxis_title="개수")
+    fig1 = px.bar(chart_df.sort_values("toilets_count", ascending=False),
+                  x="label", y="toilets_count",
+                  title="행정동별 화장실 수",
+                  color_discrete_sequence=["#4A6CF7"])
+    fig1.update_layout(xaxis_title=None, yaxis_title="개수", template="plotly_white")
     st.plotly_chart(fig1, use_container_width=True)
 
 rank_df = agg.dropna(subset=["toilets_per_1k"]).copy()
@@ -133,12 +168,14 @@ top5 = rank_df.sort_values("toilets_per_1k", ascending=False).head(5)
 low5 = rank_df.sort_values("toilets_per_1k", ascending=True).head(5)
 c1, c2 = st.columns(2)
 with c1:
-    fig2 = px.bar(top5, x=top5["district"]+" "+top5["dong"], y="toilets_per_1k", title="TOP5 (인구 1천명당)")
-    fig2.update_layout(xaxis_title=None, yaxis_title="개수/1천명")
+    fig2 = px.bar(top5, x=top5["district"]+" "+top5["dong"], y="toilets_per_1k",
+                  title="TOP5 (인구 1천명당)", color_discrete_sequence=["#6F83F7"])
+    fig2.update_layout(xaxis_title=None, yaxis_title="개수/1천명", template="plotly_white")
     st.plotly_chart(fig2, use_container_width=True)
 with c2:
-    fig3 = px.bar(low5, x=low5["district"]+" "+low5["dong"], y="toilets_per_1k", title="LOW5 (인구 1천명당)")
-    fig3.update_layout(xaxis_title=None, yaxis_title="개수/1천명")
+    fig3 = px.bar(low5, x=low5["district"]+" "+low5["dong"], y="toilets_per_1k",
+                  title="LOW5 (인구 1천명당)", color_discrete_sequence=["#A6B4F7"])
+    fig3.update_layout(xaxis_title=None, yaxis_title="개수/1천명", template="plotly_white")
     st.plotly_chart(fig3, use_container_width=True)
 
 if len(agg)>0:
