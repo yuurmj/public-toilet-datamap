@@ -103,17 +103,20 @@ m = folium.Map(location=[center_lat, center_lon], zoom_start=13, tiles="CartoDB 
 
 # 사용자 위치 마커 + 반경 원(500m)
 if user_lat and user_lon:
-    folium.Marker(
+    folium.CircleMarker(
         [user_lat, user_lon],
-        tooltip="내 위치",
+        radius=9,
+        color=PALETTE["main2"],
+        fill=True, fill_opacity=0.9,
+        fillColor=PALETTE["main2"],
         popup="내 위치",
-        icon=folium.Icon(color="blue", icon="user", prefix="fa")
     ).add_to(m)
     folium.Circle(
         [user_lat, user_lon],
         radius=500,             # 미터
-        color="blue",
-        fill=True, fill_opacity=0.05
+        color=PALETTE["subText"],
+        fill=True, fill_opacity=0.07,
+        weight=1
     ).add_to(m)
 
 # 가까운 N개 계산
@@ -130,32 +133,40 @@ if user_lat and user_lon and nearest_n > 0 and not base.empty:
 # 전체(또는 필터된) 마커
 cluster_all = MarkerCluster(name="전체 시설").add_to(m)
 
-def color(score):
+def score_color(score):
     try:
         s = float(score)
     except Exception:
-        return "gray"
-    if s < 50:  return "red"
-    if s < 80:  return "orange"
-    return "green"
+        return PALETTE["subText"]   
+    if s < 50:
+        return "#D59BE3"            
+    if s < 80:
+        return PALETTE["main1"]    
+    return PALETTE["main2"]        
 
 for _, row in base.iterrows():
     popup_html = f"""
-    <div style='font-size:14px'>
-      <b>{row['name']}</b><br/>
+    <div style='font-size:14px;color:{PALETTE["mainText"]}'>
+      <b style='color:{PALETTE["heading"]}'>{row['name']}</b><br/>
       주소: {row['address']}<br/>
       접근성 점수: {row.get('access_score', '')}<br/>
       장애인 화장실: {'예' if row.get('accessible',0)==1 else '아니오'}<br/>
       24시간: {'예' if row.get('open_24h',0)==1 else '아니오'}
     </div>
     """
+    c = score_color(row.get("access_score", np.nan))
     folium.CircleMarker(
         [row["lat"], row["lon"]],
         radius=6,
-        color=color(row.get("access_score", np.nan)),
-        fill=True, fill_opacity=0.9,
-        popup=folium.Popup(popup_html, max_width=300)
+        color=c,                 # stroke
+        fill=True,
+        fill_opacity=0.95,
+        fillColor=c,             # fill
+        weight=2,
+        popup=folium.Popup(popup_html, max_width=320)
     ).add_to(cluster_all)
+
+
 
 # 4) 가까운 N개 하이라이트
 if highlight_nearby and near is not None and len(near) > 0:
