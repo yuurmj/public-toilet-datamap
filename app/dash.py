@@ -175,8 +175,15 @@ if highlight_nearby and near is not None and len(near) > 0:
         folium.CircleMarker(
             [r["lat"], r["lon"]],
             radius=8,
-            color="purple",
+            color=PALETTE["main1"],
             fill=True, fill_opacity=1.0,
-            popup=folium.Popup(f"<b>{r['name']}</b><br/>거리: {r['distance_km']:.3f} km", max_width=250)
+            fillColor=PALETTE["main1"],
+            weight=3,
+            popup=folium.Popup(
+                f"<b style='color:{PALETTE['heading']}'>{r['name']}</b><br/>"
+                f"<span style='color:{PALETTE['mainText']}'>거리: {r['distance_km']:.3f} km</span>",
+                max_width=260
+            )
         ).add_to(fg_near)
 
+st_folium(m, width=None, height=640)
