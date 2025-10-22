@@ -1,3 +1,5 @@
+#테스트용
+
 restroom_id,name,address,district,lat,lon,accessible,open_24h,access_score
 R001,시청 공중화장실,서울 중구 세종대로 110,중구,37.5663,126.9779,1,1,92
 R002,광화문 공중화장실,서울 종로구 세종대로 175,종로구,37.5759,126.9768,0,0,70
