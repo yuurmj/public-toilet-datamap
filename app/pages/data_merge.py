@@ -5,15 +5,15 @@ import plotly.figure_factory as ff
 from pathlib import Path
 
 st.set_page_config(page_title="행정동별 인구·면적 데이터 분석", layout="wide")
-
 st.title("📊 행정동별 인구·면적 데이터 결합 및 EDA 분석")
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT_DIR / "data"
+APP_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = APP_DIR / "data"
 OUTPUT_DIR = DATA_DIR / "output"
 POP_PATH = DATA_DIR / "population.csv"
 AREA_PATH = DATA_DIR / "area.csv"
 MERGED_PATH = OUTPUT_DIR / "merged_data.csv"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 @st.cache_data
@@ -23,6 +23,18 @@ def load_csv(path: Path):
     except:
         return None
 
+if not POP_PATH.exists():
+    pd.DataFrame({
+        "행정동": ["A동", "B동", "C동", "D동"],
+        "인구": [1200, 3400, 2500, 1800]
+    }).to_csv(POP_PATH, index=False, encoding="utf-8-sig")
+
+if not AREA_PATH.exists():
+    pd.DataFrame({
+        "행정동": ["A동", "B동", "C동", "D동"],
+        "면적": [1.2, 2.4, 1.8, 3.0]
+    }).to_csv(AREA_PATH, index=False, encoding="utf-8-sig")
+
 pop_df = load_csv(POP_PATH)
 area_df = load_csv(AREA_PATH)
 
@@ -30,7 +42,6 @@ if pop_df is not None and area_df is not None:
     common_cols = set(pop_df.columns).intersection(area_df.columns)
     key_col = list(common_cols)[0] if common_cols else "행정동"
     merged_df = pd.merge(pop_df, area_df, on=key_col, how="inner")
-    MERGED_PATH.parent.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(MERGED_PATH, index=False, encoding="utf-8-sig")
 else:
     if MERGED_PATH.exists():
@@ -40,7 +51,6 @@ else:
         st.stop()
 
 st.header("1️⃣ 행정동별 기본 집계")
-
 region_col = st.selectbox("행정동 컬럼 선택", [c for c in merged_df.columns if "동" in c or "행정" in c], index=0)
 numeric_cols = merged_df.select_dtypes(include="number").columns.tolist()
 pop_col = st.selectbox("인구 컬럼 선택", numeric_cols, index=0)
@@ -51,7 +61,6 @@ grouped = merged_df.groupby(region_col).agg(
     총면적=(area_col, "mean")
 ).reset_index()
 grouped["인구밀도(명/km²)"] = grouped["총인구"] / grouped["총면적"]
-
 st.dataframe(grouped.head(), use_container_width=True)
 
 st.header("2️⃣ 시각화 분석")
@@ -62,16 +71,14 @@ with tab1:
     with c1:
         fig_pop = px.bar(
             grouped.sort_values("총인구", ascending=False),
-            x=region_col, y="총인구",
-            title="행정동별 총인구",
+            x=region_col, y="총인구", title="행정동별 총인구",
             color="총인구", color_continuous_scale="Blues"
         )
         st.plotly_chart(fig_pop, use_container_width=True)
     with c2:
         fig_density = px.bar(
             grouped.sort_values("인구밀도(명/km²)", ascending=False),
-            x=region_col, y="인구밀도(명/km²)",
-            title="행정동별 인구밀도",
+            x=region_col, y="인구밀도(명/km²)", title="행정동별 인구밀도",
             color="인구밀도(명/km²)", color_continuous_scale="Reds"
         )
         st.plotly_chart(fig_density, use_container_width=True)
@@ -96,15 +103,12 @@ with tab3:
     st.plotly_chart(fig_corr, use_container_width=True)
 
 with tab4:
-    try:
-        fig_heat = px.density_heatmap(
-            grouped, x="총면적", y="총인구", z="인구밀도(명/km²)",
-            nbinsx=20, nbinsy=20, color_continuous_scale="Viridis",
-            title="면적 대비 인구 및 밀도 히트맵"
-        )
-        st.plotly_chart(fig_heat, use_container_width=True)
-    except Exception as e:
-        st.warning(f"히트맵 생성 실패: {e}")
+    fig_heat = px.density_heatmap(
+        grouped, x="총면적", y="총인구", z="인구밀도(명/km²)",
+        nbinsx=20, nbinsy=20, color_continuous_scale="Viridis",
+        title="면적 대비 인구 및 밀도 히트맵"
+    )
+    st.plotly_chart(fig_heat, use_container_width=True)
 
 st.header("3️⃣ 결과 저장")
 grouped_path = OUTPUT_DIR / "grouped_data.csv"
