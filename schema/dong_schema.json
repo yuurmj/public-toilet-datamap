@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/dong_schema.json",
+  "title": "Busan Nam-gu By-Dong Aggregated Dataset",
+  "description": "부산광역시 남구 행정동 단위 공중화장실 집계 데이터 스키마 (by_dong.csv/JSON).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "city": {
+      "type": "string",
+      "const": "부산광역시",
+      "description": "광역시/도"
+    },
+    "district": {
+      "type": "string",
+      "const": "남구",
+      "description": "기초자치단체(구/군)"
+    },
+    "legal_dong": {
+      "type": "string",
+      "enum": ["대연동", "용호동", "문현동", "감만동", "우암동", "용당동"],
+      "description": "법정동"
+    },
+    "admin_dong": {
+      "type": "string",
+      "enum": [
+        "대연1동","대연3동","대연4동","대연5동","대연6동",
+        "용호1동","용호2동","용호3동","용호4동",
+        "문현1동","문현2동","문현3동","문현4동",
+        "감만1동","감만2동",
+        "우암동","용당동"
+      ],
+      "description": "행정동(집계 단위)"
+    },
+    "admin_dong_code": {
+      "type": "string",
+      "pattern": "^NG-(?:DY[13456]|YH[1234]|MH[1234]|GM[12]|UA|YD)$",
+      "description": "내부 행정동 코드(예: NG-DY4 = 남구-대연4동). 팀 내부 코드 규칙."
+    },
+    "centroid_lat": {
+      "type": "number",
+      "minimum": 34.0,
+      "maximum": 36.5,
+      "description": "행정동 중심 위도(대략 부산 권역 검증)"
+    },
+    "centroid_lng": {
+      "type": "number",
+      "minimum": 127.0,
+      "maximum": 131.0,
+      "description": "행정동 중심 경도(대략 부산 권역 검증)"
+    },
+    "area_km2": {
+      "type": "number",
+      "minimum": 0,
+      "description": "행정동 면적(km^2)"
+    },
+    "population": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "주민등록 인구 수(명)"
+    },
+    "floating_population": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "유동인구(옵션)"
+    },
+    "toilets_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "공중화장실 수(개소)"
+    },
+    "toilets_accessible": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "장애인 화장실 설치 개소 수"
+    },
+    "male_urinals_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "남자 소변기 총합(개)"
+    },
+    "male_toilets_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "남자 대변기 총합(개)"
+    },
+    "female_toilets_total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "여자 변기 총합(개)"
+    },
+    "open_24h_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "24시간 개방 화장실 개소(옵션)"
+    },
+    "baby_table_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "기저귀 교환대 비치 개소(옵션)"
+    },
+    "toilets_per_10k": {
+      "type": "number",
+      "minimum": 0,
+      "description": "인구 1만 명당 공중화장실 개소 수"
+    },
+    "toilets_density_per_km2": {
+      "type": "number",
+      "minimum": 0,
+      "description": "면적 1km²당 공중화장실 개소 수"
+    },
+    "accessible_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "장애인 화장실 설치 비율(0~1)"
+    },
+    "gap_score": {
+      "type": ["number", "null"],
+      "description": "부족도 지표(선택)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date",
+      "description": "데이터 갱신일(YYYY-MM-DD)"
+    },
+    "source": {
+      "type": "string",
+      "description": "데이터 출처(링크 또는 식별자)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "스키마/데이터 버전(semver)"
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "비고(선택)"
+    }
+  },
+  "required": [
+    "city",
+    "district",
+    "legal_dong",
+    "admin_dong",
+    "centroid_lat",
+    "centroid_lng",
+    "area_km2",
+    "population",
+    "toilets_total",
+    "toilets_accessible",
+    "male_urinals_total",
+    "male_toilets_total",
+    "female_toilets_total",
+    "toilets_per_10k",
+    "toilets_density_per_km2",
+    "accessible_ratio",
+    "updated_at",
+    "version"
+  ],
+  "examples": [
+    {
+      "city": "부산광역시",
+      "district": "남구",
+      "legal_dong": "대연동",
+      "admin_dong": "대연4동",
+      "admin_dong_code": "NG-DY4",
+      "centroid_lat": 35.1312,
+      "centroid_lng": 129.1015,
+      "area_km2": 1.82,
+      "population": 18450,
+      "floating_population": null,
+      "toilets_total": 12,
+      "toilets_accessible": 7,
+      "male_urinals_total": 38,
+      "male_toilets_total": 24,
+      "female_toilets_total": 32,
+      "open_24h_count": 2,
+      "baby_table_count": 3,
+      "toilets_per_10k": 6.5,
+      "toilets_density_per_km2": 6.59,
+      "accessible_ratio": 0.58,
+      "gap_score": -0.41,
+      "updated_at": "2025-10-29",
+      "source": "data.go.kr / 남구 공공데이터",
+      "version": "1.0.0",
+      "notes": "초기 산출값; 9주차에 검증 예정"
+    }
+  ]
+}
