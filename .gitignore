@@ -5,8 +5,8 @@ __pycache__/
 .venv/
 .env
 
-# Data
-
+# Data (중간 산출물)
+data/validated/
 
 # OS/Editor
 .DS_Store
