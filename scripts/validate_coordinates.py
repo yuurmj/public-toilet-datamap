@@ -1,6 +1,7 @@
 # 입력:  public-toilet-datamap/data/raw/toilets_namgu.csv
 # 출력:  public-toilet-datamap/data/validated/facilities_valid.csv (이상치 제외)
 # 빠른 실행: python scripts/validate_coordinates.py --debug
+# hw
 
 import argparse
 import os

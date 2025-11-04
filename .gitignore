@@ -7,6 +7,7 @@ __pycache__/
 
 # Data (중간 산출물)
 data/validated/
+reports/summary.md
 
 # OS/Editor
 .DS_Store
