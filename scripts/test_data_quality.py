@@ -1,7 +1,7 @@
 # 입력: data/validated/facilities_valid.csv
 # 출력: reports/summary.md  (누적 append)
 # 실행: python scripts/test_data_quality.py 아니면 python scripts/test_data_quality.py --debug
-# hw
+# hw 대시보드-Streamlit에서 사용
 
 import argparse
 import os
