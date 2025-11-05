@@ -5,8 +5,10 @@ __pycache__/
 .venv/
 .env
 
-# Data
-
+# Data (중간 산출물)
+data/validated/
+reports/summary.md
+app/data/output/by_dong_app.csv
 
 # OS/Editor
 .DS_Store
