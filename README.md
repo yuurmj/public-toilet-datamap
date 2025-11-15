@@ -8,7 +8,7 @@
 <br><br>
 
 <img src="./image.png">
-<div align=center><h2>📌 프로젝트 개요</h2>
+<div><h2 align=center>📌 프로젝트 개요</h2>
 
 <p>
 공공화장실 데이터 맵은 <b>주변의 공공화장실 위치를 직관적으로 확인</b>할 수 있는 서비스입니다.<br>
@@ -18,7 +18,7 @@
 
 <hr>
 
-<h2>✨ 주요 기능</h2>
+<h2 align=center>✨ 주요 기능</h2>
 
 <ol>
   <li><b>데이터 수집 및 전처리</b>
@@ -29,7 +29,7 @@
       <li>데이터 정제 및 좌표 변환, DB 테이블 구축</li>
     </ul>
   </li>
-
+<br>
   <li><b>공공화장실 현황 분석</b>
     <ul>
       <li>총 화장실 수, 행정동별 분포, 인구 대비 화장실 수 산출</li>
@@ -38,7 +38,7 @@
       <li>설치 연도별 추세 및 변화 분석</li>
     </ul>
   </li>
-
+<br>
   <li><b>시각화 기능</b>
     <ul>
       <li><b>지도 기반 시각화</b>: Folium + Streamlit
@@ -54,7 +54,7 @@
       </li>
     </ul>
   </li>
-
+<br>
   <li><b>대시보드 제공</b>
     <ul>
       <li>Streamlit 기반 통합 대시보드</li>
@@ -63,7 +63,7 @@
       <li>머신러닝 예측 결과 카드 & 지도 오버레이 표시</li>
     </ul>
   </li>
-
+<br>
   <li><b>머신러닝 예측 기능 (추가 예정)</b>
     <ul>
       <li>화장실 부족 지역 vs 적정 지역 분류 모델</li>
@@ -73,7 +73,8 @@
   </li>
 </ol>
 
-## 👋 Team Members
+
+<h2 align=center>👋 Team Members</h2>
 
 <table align="center">
   <tr>
