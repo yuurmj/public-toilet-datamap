@@ -88,7 +88,7 @@ body, [class*="css"] {
 
 .ai-row:last-child { border-bottom: none; }
 
-.ai-name { font-weight: 600; width: 50px; }
+.ai-name { font-weight: 600; width: 15%; }
 
 .ai-badge {
     padding: 4px 12px;
@@ -100,8 +100,7 @@ body, [class*="css"] {
 .badge-good { background: #F4FCFA; color: #8FDAC8; }
 .badge-bad { background: #F9F7FE; color: #BFA9F2; }
 
-.ai-rate { width: 40px; font-weight: 600; text-align: center; color: #6d6a7c; }
-
+.ai-rate { width: 13%; font-weight: 600; text-align: right; color: #6d6a7c; }
 .ai-desc { flex: 1; text-align: center; color: #6d6a7c; font-size: 13px; }
 .block-container { padding:0 18px 0 18px !important; }
 </style>
@@ -160,7 +159,7 @@ with left:
     center = [37.5665, 126.9780]
     m = folium.Map(location=center, zoom_start=12, tiles="CartoDB Positron")
     folium.Marker(location=center, tooltip="서울시청").add_to(m)
-    st_folium(m, width=850, height=457)
+    st_folium(m, width=True, height=457)
     st.markdown('</div>', unsafe_allow_html=True)    
     df = pd.DataFrame({
         "행정동": ["우암동", "대연동", "용당동", "용호동", "문현동", "감만동"],
