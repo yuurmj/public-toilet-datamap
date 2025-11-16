@@ -4,11 +4,22 @@ from datetime import date
 # 1) 페이지 기본 설정
 st.set_page_config(page_title="설정", layout="wide")
 
+# # 배경 색상
+# st.markdown(
+#     """
+#     <style>
+#         body { background-color: #F5F6F8; }
+#         .main { background-color: #F5F6F8; }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
 # 토글 UI
 def render_toggle(is_on: bool) -> str:
     """글자가 동그라미 안에 들어가는 알약형 토글 (고정형 UI)"""
     if is_on:
-        outer_bg = "#F0E7FF"   # 연한 보라
+        outer_bg = "#E7E1FF"   # 연한 보라
         circle_bg = "#BFA9F2"  # 진한 보라
         text = "ON"
         text_color = "#FFFFFF"
@@ -20,11 +31,10 @@ def render_toggle(is_on: bool) -> str:
         text_color = "#FFFFFF"
         circle_pos = "left:6px;"
 
-    # ⚠️ 주석(<!-- -->)은 빼고 깔끔하게 두는 게 안전해
     return f"""
     <div style="
         position:relative;
-        width:80px;
+        width:100px;
         height:34px;
         border-radius:999px;
         background-color:{outer_bg};
@@ -51,6 +61,24 @@ def render_toggle(is_on: bool) -> str:
     </div>
     """
 
+# 알약형 배지 UI
+def render_pill(text: str, bg: str) -> str:
+    return f"""
+        <div style='
+            padding:8px 20px;
+            border-radius:999px;
+            background-color:{bg};
+            color:#31333F;
+            font-weight:350;
+            font-size:15px;
+            display:inline-block;
+            text-align:center;
+            min-width:120px;     /* 최소 가로 길이 통일 */
+            text-align:center;
+        '>
+            {text}
+        </div>
+    """
 
 
 
@@ -60,7 +88,7 @@ table = st.container()
 
 with table:
     # 헤더 행
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     c1.markdown("**Name**")
     c2.markdown("**Description**")
@@ -78,7 +106,7 @@ with table:
 
 # 계정 설정 – 장애인 화장실 표시 여부
     # 계정 설정
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -104,7 +132,7 @@ with table:
     st.markdown("")  # 행 사이 여백
 
     # 지도/위치 설정 – 현재 위치 자동 감지 여부
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -130,7 +158,7 @@ with table:
     # 기본 지도 위치 (보라색 배지)
     st.markdown("")
 
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -147,18 +175,7 @@ with table:
         )
 
     with c3:
-        st.markdown(
-            f"""
-            <div style='padding:6px 14px; 
-                        border-radius:999px; 
-                        background-color:#E7E1FF; 
-                        font-weight:350; 
-                        display:inline-block;'>
-                남구 대연동
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown(render_pill("남구 대연동", "#E7E1FF"), unsafe_allow_html=True)
 
 
 
@@ -167,7 +184,7 @@ with table:
     st.markdown("")
 
     # ④ 검색 & 필터 설정
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -184,28 +201,14 @@ with table:
         )
 
     with c3:
-        st.markdown(
-            f"""
-            <div style='padding:6px 16px; 
-                        border-radius:999px; 
-                        background-color:#D6F3E7;
-                        color:#31333F;
-                        font-weight:350;
-                        display:inline-block;
-                        text-align:center;'>
-                5개
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+        st.markdown(render_pill("5개", "#D6F3E7"), unsafe_allow_html=True)
 
 
 # 데이터 & 언어 – 데이터 최신 업데이트일 확인
     st.markdown("")
 
     # ⑤ 데이터 & 언어 – 데이터 최신 업데이트일
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -222,20 +225,7 @@ with table:
         )
 
     with c3:
-        st.markdown(
-            f"""
-            <div style='padding:6px 16px; 
-                        border-radius:999px; 
-                        background-color:#E7E1FF; 
-                        color:#31333F;
-                        font-weight:350;
-                        display:inline-block;
-                        text-align:center;'>
-                2025.10.03
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown(render_pill("2025.11.17", "#E7E1FF"), unsafe_allow_html=True)
 
 
 
@@ -244,7 +234,7 @@ with table:
     st.markdown("")
 
     # ⑥ 데이터 & 언어 – 언어 선택
-    c1, c2, c3 = st.columns([2, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 2])
 
     with c1:
         st.markdown(
@@ -255,23 +245,10 @@ with table:
 
     with c2:
         st.markdown(
-            "언어 선택(한국어/영어)  \n"
-            "<span style='color:#909090; font-size:13px;'>Language Selection (Korean / English)</span>",
+            "언어 설정 (한국어)  \n"
+            "<span style='color:#909090; font-size:13px;'>Language (Korean</span>",
             unsafe_allow_html=True,
         )
 
     with c3:
-        st.markdown(
-            f"""
-            <div style='padding:6px 16px; 
-                        border-radius:999px; 
-                        background-color:#D6F3E7;
-                        color:#31333F;
-                        font-weight:350;
-                        display:inline-block;
-                        text-align:center;'>
-                한국어
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown(render_pill("한국어", "#D6F3E7"), unsafe_allow_html=True)
