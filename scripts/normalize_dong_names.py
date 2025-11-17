@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# 동 이름 정규화 스크립트
 
 """
 사용 예시

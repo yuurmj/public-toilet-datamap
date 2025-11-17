@@ -3,6 +3,8 @@
 # 빠른 실행: python scripts/validate_coordinates.py --debug
 # hw 대시보드-Streamlit에서 사용
 
+# 지역이 바뀌면 입력에 nomalize_dong_names.py 스크립트 사용 필요!!!!!!
+
 import argparse
 import os
 import pandas as pd
