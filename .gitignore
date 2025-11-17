@@ -6,9 +6,9 @@ __pycache__/
 .env
 
 # Data (중간 산출물)
-data/validated/
-reports/summary.md
-app/data/output/by_dong_app.csv
+# data/validated/
+# reports/summary.md
+# app/data/output/by_dong_app.csv
 
 # OS/Editor
 .DS_Store
