@@ -1,19 +1,28 @@
 import streamlit as st
 from datetime import date
+from textwrap import dedent
 
 # 1) 페이지 기본 설정
 st.set_page_config(page_title="설정", layout="wide")
 
-# # 배경 색상
-# st.markdown(
-#     """
-#     <style>
-#         body { background-color: #F5F6F8; }
-#         .main { background-color: #F5F6F8; }
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
+st.markdown("""
+<style>
+/* 전체 배경 회색 */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main {
+    background-color: #FAFAFB !important;
+}
+
+/* 공통 카드 박스 (흰색 박스) */
+.setting-card {
+    background-color: #FFFFFF;
+    border-radius: 24px;
+    padding: 18px 24px;
+    margin: 10px 0;
+    box-shadow: 0 10px 30px rgba(23, 34, 59, 0.06);
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # 토글 UI
 def render_toggle(is_on: bool) -> str:
@@ -63,8 +72,7 @@ def render_toggle(is_on: bool) -> str:
 
 # 알약형 배지 UI
 def render_pill(text: str, bg: str) -> str:
-    return f"""
-        <div style='
+    return f"""<div style="
             padding:8px 20px;
             border-radius:999px;
             background-color:{bg};
@@ -73,12 +81,12 @@ def render_pill(text: str, bg: str) -> str:
             font-size:15px;
             display:inline-block;
             text-align:center;
-            min-width:120px;     /* 최소 가로 길이 통일 */
-            text-align:center;
-        '>
+            min-width:120px;
+        ">
             {text}
         </div>
     """
+
 
 
 
@@ -88,7 +96,7 @@ table = st.container()
 
 with table:
     # 헤더 행
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    c1, c2, c3 = st.columns([2.5, 3, 1])
 
     c1.markdown("**Name**")
     c2.markdown("**Description**")
@@ -106,149 +114,154 @@ with table:
 
 # 계정 설정 – 장애인 화장실 표시 여부
     # 계정 설정
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">계정 설정</div>
+        <div style="font-size:13px; color:#909090;">Account Settings</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**계정 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Account Settings</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">장애인 화장실 표시 여부</div>
+        <div style="font-size:13px; color:#909090;">Show accessible toilets</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "장애인 화장실 표시 여부  \n"
-            "<span style='color:#909090; font-size:13px;'>Show accessible toilets</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_toggle(True)}
+    </div>
+    </div>
+    """)
 
-    with c3:
-        html = render_toggle(True)
-        st.markdown(render_toggle(True), unsafe_allow_html=True)
+    st.markdown(html, unsafe_allow_html=True)
 
 
 
 #지도/위치 – 현재 위치 자동 감지 여부
-    st.markdown("")  # 행 사이 여백
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
 
-    # 지도/위치 설정 – 현재 위치 자동 감지 여부
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">지도/위치 설정</div>
+        <div style="font-size:13px; color:#909090;">Map & Location</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**지도/위치 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Map & Location</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">현재 위치 자동 감지 여부</div>
+        <div style="font-size:13px; color:#909090;">Auto-detect Current Location</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "현재 위치 자동 감지 여부  \n"
-            "<span style='color:#909090; font-size:13px;'>Auto-detect Current Location</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_toggle(False)}
+    </div>
 
-    with c3:
-        html = render_toggle(False)
-        st.markdown(render_toggle(False), unsafe_allow_html=True)
+    </div>
+    """)
+
+    st.markdown(html, unsafe_allow_html=True)
+
 
 
 
 # 기본 지도 위치
     # 기본 지도 위치 (보라색 배지)
-    st.markdown("")
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
 
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">지도/위치 설정</div>
+        <div style="font-size:13px; color:#909090;">Map & Location</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**지도/위치 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Map & Location</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">기본 지도 위치</div>
+        <div style="font-size:13px; color:#909090;">Default Map Center</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "기본 지도 위치  \n"
-            "<span style='color:#909090; font-size:13px;'>Default Map Center</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_pill("남구 대연동", "#E7E1FF")}
+    </div>
 
-    with c3:
-        st.markdown(render_pill("남구 대연동", "#E7E1FF"), unsafe_allow_html=True)
+    </div>
+    """)
+
+    st.markdown(html, unsafe_allow_html=True)
+
 
 
 
 
 # 검색 & 필터 – 가까운 화장실 개수 기본값
-    st.markdown("")
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
 
-    # ④ 검색 & 필터 설정
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">검색 & 필터 설정</div>
+        <div style="font-size:13px; color:#909090;">Search & Filters</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**검색 & 필터 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Search & Filters</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">가까운 화장실 개수 기본값</div>
+        <div style="font-size:13px; color:#909090;">Default Number of Nearby Toilets</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "가까운 화장실 개수 기본값  \n"
-            "<span style='color:#909090; font-size:13px;'>Default Number of Nearby Toilets</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_pill("5개", "#D6F3E7")}
+    </div>
 
-    with c3:
-        st.markdown(render_pill("5개", "#D6F3E7"), unsafe_allow_html=True)
+    </div>
+    """)
+
+    st.markdown(html, unsafe_allow_html=True)
+
 
 
 # 데이터 & 언어 – 데이터 최신 업데이트일 확인
-    st.markdown("")
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
 
-    # ⑤ 데이터 & 언어 – 데이터 최신 업데이트일
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">데이터 & 언어 설정</div>
+        <div style="font-size:13px; color:#909090;">Data & Language</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**데이터 & 언어 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Data & Language</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">데이터 최신 업데이트일 확인</div>
+        <div style="font-size:13px; color:#909090;">Last Data Update</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "데이터 최신 업데이트일 확인  \n"
-            "<span style='color:#909090; font-size:13px;'>Last Data Update</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_pill("2025.11.17", "#E7E1FF")}
+    </div>
 
-    with c3:
-        st.markdown(render_pill("2025.11.17", "#E7E1FF"), unsafe_allow_html=True)
+    </div>
+    """)
+
+    st.markdown(html, unsafe_allow_html=True)
+
 
 
 
 
 # 데이터 & 언어 – 언어 선택 (한국어만 가능)
-    st.markdown("")
+    html = dedent(f"""
+    <div class="setting-card" style="display:flex; align-items:center;">
 
-    # ⑥ 데이터 & 언어 – 언어 선택
-    c1, c2, c3 = st.columns([2.5, 3, 2])
+    <div style="flex:2.5;">
+        <div style="font-weight:600;">데이터 & 언어 설정</div>
+        <div style="font-size:13px; color:#909090;">Data & Language</div>
+    </div>
 
-    with c1:
-        st.markdown(
-            "**데이터 & 언어 설정**  \n"
-            "<span style='color:#909090; font-size:13px;'>Data & Language</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:3;">
+        <div style="font-weight:500;">언어 설정 (한국어)</div>
+        <div style="font-size:13px; color:#909090;">Language (Korean)</div>
+    </div>
 
-    with c2:
-        st.markdown(
-            "언어 설정 (한국어)  \n"
-            "<span style='color:#909090; font-size:13px;'>Language (Korean</span>",
-            unsafe_allow_html=True,
-        )
+    <div style="flex:1; text-align:right;">
+        {render_pill("한국어", "#D6F3E7")}
+    </div>
 
-    with c3:
-        st.markdown(render_pill("한국어", "#D6F3E7"), unsafe_allow_html=True)
+    </div>
+    """)
+
+    st.markdown(html, unsafe_allow_html=True)
+
