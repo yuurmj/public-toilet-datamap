@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # =========================
-# 📊 글로벌 스타일
+# 글로벌 스타일
 # =========================
 st.markdown("""
 <style>
@@ -158,7 +158,7 @@ div[data-testid="stSelectbox"] svg {
 
 
 # =========================
-# 💾 데이터 로드 및 처리
+# 데이터 로드 및 처리
 # =========================
 @st.cache_data
 def load_data():
@@ -254,7 +254,7 @@ with right_box:
     st.markdown('</div></div>', unsafe_allow_html=True)
 
 # =========================
-# 📈 상단 요약 카드 4개
+# 상단 요약 카드 4개
 # =========================
 c1, c2, c3, c4 = st.columns(4)
 
@@ -305,7 +305,7 @@ with c4:
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)  # 여백
 
 # =========================
-# 🛠️ 헬퍼 함수 정의
+# 헬퍼 함수 정의
 # =========================
 
 def chart_card(title: str, fig, subtitle: str | None = None, height: int = 250):
@@ -477,7 +477,7 @@ def ratio_card(df):
     components.html(html, height=300, scrolling=False)
 
 # =========================
-# 📑 중단 3개 카드
+# 중단 3개 카드
 # =========================
 colA, colB, colC = st.columns([1.2, 1.2, 1.0])
 
@@ -560,7 +560,7 @@ with colC:
     ratio_card(agg)
 
 # =========================
-# 📋 하단 테이블 카드
+# 하단 테이블 카드
 # =========================
 
 tbl = agg.copy()
