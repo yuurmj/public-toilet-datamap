@@ -34,6 +34,15 @@ DEFAULT_SETTINGS = {
     "language": "ko",                         # 언어 설정
 }
 
+# session_state에 기본값 채움
+def init_settings():
+    for key, value in DEFAULT_SETTINGS.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
+# 페이지 로드 시 1번 실행
+init_settings()
 
 
 # 토글 UI
