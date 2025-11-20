@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import date
 from textwrap import dedent
+from datetime import date
 
 # 1) 페이지 기본 설정
 st.set_page_config(page_title="설정", layout="wide")
@@ -22,6 +23,17 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 }
 </style>
 """, unsafe_allow_html=True)
+
+# UX-이 페이지에서 사용할 기본 설정값 딕셔너리
+DEFAULT_SETTINGS = {
+    "show_accessible_toilets": True,          # 장애인 화장실 표시 여부
+    "auto_detect_location": False,            # 현재 위치 자동 감지 여부
+    "default_map_center": "남구 대연동",      # 기본 지도 중심 동
+    "default_nearby_count": 5,                # 가까운 화장실 개수 기본값
+    "last_data_update": date(2025, 11, 17),   # 데이터 최신 업데이트일
+    "language": "ko",                         # 언어 설정
+}
+
 
 
 # 토글 UI
@@ -220,7 +232,7 @@ with table:
     <div class="setting-card" style="display:flex; align-items:center;">
 
     <div style="flex:2.5;">
-        <div style="font-weight:600;">데이터 & 언어 설정</div>
+        <div style="font-weight:600;">데이터 설정</div>
         <div style="font-size:13px; color:#909090;">Data & Language</div>
     </div>
 
@@ -247,7 +259,7 @@ with table:
     <div class="setting-card" style="display:flex; align-items:center;">
 
     <div style="flex:2.5;">
-        <div style="font-weight:600;">데이터 & 언어 설정</div>
+        <div style="font-weight:600;"> 언어 설정</div>
         <div style="font-size:13px; color:#909090;">Data & Language</div>
     </div>
 
