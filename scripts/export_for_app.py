@@ -1,333 +1,181 @@
-# 기본 입력: data/validated/facilities_valid.csv
-# 기본 출력: app/data/output/by_dong_app.csv
-# 실행 : python scripts/export_for_app.py --debug
-# (참조표가 있을 때 실행 예시)  python scripts/export_for_app.py --centers data/ref/dong_centers.csv --area data/ref/dong_area.csv --pop data/ref/population_by_dong.csv --debug
+# mode by_dong: validated 시설 단위 → 동별 집계 CSV
+# mode app    : processed/*.normalized.csv → app/*.csv(population_app.csv, toilets_app.csv)
+# 실행 : python scripts/export_for_app.py --mode by_dong --fac data/validated/facilities_valid.csv --out app/data/output/by_dong_app.csv --debug
 
+from __future__ import annotations
+from pathlib import Path
 import argparse
 import os
 from datetime import datetime
 from typing import Optional, List
-
+import numpy as np
 import pandas as pd
 
+# scripts/process_population.py
+# - raw/population/population_namgu.csv → processed/population/population_namgu.normalized.csv
+# - processed/*.normalized.csv → app/population_app.csv
 
-# -------------------- Utils --------------------
-def ensure_parent(path: str):
-    d = os.path.dirname(path)
-    if d:
-        os.makedirs(d, exist_ok=True)
+from pathlib import Path
+import pandas as pd
+import numpy as np
+import re
 
+# -------- 공통 유틸 --------
+def read_csv_smart(path: Path) -> pd.DataFrame:
+    encodings = ["utf-8-sig", "cp949", "euc-kr"]
+    last_err = None
+    for enc in encodings:
+        try:
+            return pd.read_csv(path, encoding=enc, engine="python")
+        except Exception as e:
+            last_err = e
+    raise last_err
 
-def load_csv(path: Optional[str], encoding="utf-8-sig") -> Optional[pd.DataFrame]:
-    if not path:
-        return None
-    try:
-        df = pd.read_csv(path, encoding=encoding)
-        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-        return df
-    except FileNotFoundError:
-        print(f"[WARN] 파일이 없어 스킵합니다: {path}")
-        return None
+def to_int_safe(x):
+    if pd.isna(x):
+        return np.nan
+    s = re.sub(r"[^0-9]", "", str(x))
+    return pd.to_numeric(s, errors="coerce")
 
+def to_float_safe(x):
+    if pd.isna(x):
+        return np.nan
+    # 소수점 포함 숫자만 남김
+    s = re.sub(r"[^0-9.]", "", str(x))
+    # 소수점이 여러 개인 경우 첫 번째만 유지
+    if s.count(".") > 1:
+        head, *rest = s.split(".")
+        s = head + "." + "".join(rest)
+    return pd.to_numeric(s, errors="coerce")
 
-def to_float(series: pd.Series) -> pd.Series:
-    return pd.to_numeric(series, errors="coerce").astype(float)
+def norm_col(c: str) -> str:
+    c = str(c).replace("\ufeff", "")
+    c = re.sub(r"\s+", "", c)
+    c = re.sub(r"[()\[\]{}·,./\-]", "", c)
+    return c.lower()
 
+def normalize_dong_name(name: str) -> str:
+    if not isinstance(name, str):
+        return ""
+    s = re.sub(r"\s+", "", name.strip())
+    s = re.sub(r"제?\d+동$", "동", s)  # 제2동/2동 → 동
+    return s
 
-def to_int(series: pd.Series) -> pd.Series:
-    s = pd.to_numeric(series, errors="coerce")
-    s = s.fillna(0)
-    return s.astype(int)
+def looks_like_dong(name: str) -> bool:
+    if not isinstance(name, str):
+        return False
+    n = name.strip()
+    if n == "" or ("합계" in n) or ("소계" in n) or (n == "계"):
+        return False
+    return ("동" in n) and ("구" not in n)
 
-
-def first_mode(series: pd.Series) -> Optional[str]:
-    """가장 많이 등장하는 문자열(법정동 등)을 하나 선택."""
-    if series.empty:
-        return None
-    mode = series.mode(dropna=True)
-    return None if mode.empty else str(mode.iloc[0])
-
-
-def coalesce_cols(df: pd.DataFrame, candidates: List[str]) -> Optional[str]:
-    for c in candidates:
-        if c in df.columns:
+def detect_area_col(columns: list[str]) -> str | None:
+    # 정규화된 컬럼명에서 면적 후보 찾기
+    pats = [r"area", r"면적", r"제곱킬로미터", r"km2", r"㎢"]
+    for c in columns:
+        if any(re.search(p, c) for p in pats):
             return c
     return None
 
-
-# -------------------- Core --------------------
-def build_by_dong(
-    fac: pd.DataFrame,
-    centers: Optional[pd.DataFrame],
-    area: Optional[pd.DataFrame],
-    pop: Optional[pd.DataFrame],
-    city_const: str,
-    district_const: str,
-    version: str,
-) -> pd.DataFrame:
-    # 필요한 컬럼 존재 확인/보정
-    required = ["lat", "lon", "accessible"]
-    for col in required:
-        if col not in fac.columns:
-            raise ValueError(f"[ERROR] 입력 데이터에 필요한 컬럼이 없습니다: {col}")
-
-    # 열 이름 후보 (유연 매핑)
-    admin_col = coalesce_cols(fac, ["admin_dong", "행정동", "dong", "동"])
-    legal_col = coalesce_cols(fac, ["legal_dong", "법정동"])
-    district_col = coalesce_cols(fac, ["district", "구", "군"])
-
-    if admin_col is None:
-        raise ValueError("[ERROR] 행정동 컬럼(admin_dong/행정동/dong/동)을 찾을 수 없습니다.")
-
-    # 수치형 캐스팅
-    fac["lat"] = to_float(fac["lat"])
-    fac["lon"] = to_float(fac["lon"])
-    fac["accessible"] = to_int(fac["accessible"])
-
-    # 그룹 집계 (동 기준)
-    gb_keys = [admin_col]
-    # district/legal 동이 있으면 함께 모드로 보강
-    agg = (
-        fac.groupby(gb_keys, dropna=False)
-        .agg(
-            toilets_total=("accessible", "count"),
-            toilets_accessible=("accessible", "sum"),
-            centroid_lat=("lat", "mean"),   # 참조 중심좌표 있으면 나중에 덮어씀
-            centroid_lng=("lon", "mean"),
-        )
-        .reset_index()
-        .rename(columns={admin_col: "admin_dong"})
-    )
-
-    # legal_dong / district 모드값 붙이기
-    if legal_col:
-        legal_map = (
-            fac.groupby(admin_col)[legal_col].agg(first_mode).reset_index()
-            .rename(columns={admin_col: "admin_dong", legal_col: "legal_dong"})
-        )
-        agg = agg.merge(legal_map, on="admin_dong", how="left")
-    else:
-        agg["legal_dong"] = ""
-
-    if district_col:
-        dist_map = (
-            fac.groupby(admin_col)[district_col].agg(first_mode).reset_index()
-            .rename(columns={admin_col: "admin_dong", district_col: "district"})
-        )
-        agg = agg.merge(dist_map, on="admin_dong", how="left")
-    else:
-        agg["district"] = district_const
-
-    # city/district 상수 보강(빈 값만)
-    agg["city"] = agg.get("city", "")
-    agg.loc[agg["city"].isna() | (agg["city"] == ""), "city"] = city_const
-    agg.loc[agg["district"].isna() | (agg["district"] == ""), "district"] = district_const
-
-    # admin_dong_code 탐색/조인
-    # 우선순위: centers -> area -> population 에 있는 코드 열을 찾아 조인
-    def try_merge_code(df_left: pd.DataFrame, df_ref: Optional[pd.DataFrame]) -> pd.DataFrame:
-        if df_ref is None:
-            return df_left
-        # 후보 키
-        code_col = coalesce_cols(df_ref, ["admin_dong_code", "행정동코드", "dong_code", "code"])
-        name_col = coalesce_cols(df_ref, ["admin_dong", "행정동"])
-        if code_col and name_col:
-            ref = df_ref[[name_col, code_col]].drop_duplicates()
-            ref = ref.rename(columns={name_col: "admin_dong", code_col: "admin_dong_code"})
-            return df_left.merge(ref, on="admin_dong", how="left")
-        return df_left
-
-    agg = try_merge_code(agg, centers)
-    agg = try_merge_code(agg, area)
-    agg = try_merge_code(agg, pop)
-    if "admin_dong_code" not in agg.columns:
-        agg["admin_dong_code"] = ""
-
-    # 중심좌표(참조가 있으면 덮어쓰기)
-    if centers is not None:
-        # centers는 admin_dong_code 와 lat/lng 혹은 admin_dong 와 lat/lng 를 가질 수 있음
-        c_name = coalesce_cols(centers, ["admin_dong", "행정동"])
-        c_code = coalesce_cols(centers, ["admin_dong_code", "행정동코드", "dong_code", "code"])
-        c_lat = coalesce_cols(centers, ["centroid_lat", "lat_center", "lat", "위도"])
-        c_lng = coalesce_cols(centers, ["centroid_lng", "lon_center", "lng", "lon", "경도"])
-
-        if c_lat and c_lng:
-            cref = centers.copy()
-            # 조인 키 설정: 코드 우선, 없으면 이름
-            if c_code and "admin_dong_code" in agg.columns:
-                cref = cref.rename(columns={c_code: "admin_dong_code", c_lat: "c_lat", c_lng: "c_lng"})
-                agg = agg.merge(cref[["admin_dong_code", "c_lat", "c_lng"]], on="admin_dong_code", how="left")
-            elif c_name:
-                cref = cref.rename(columns={c_name: "admin_dong", c_lat: "c_lat", c_lng: "c_lng"})
-                agg = agg.merge(cref[["admin_dong", "c_lat", "c_lng"]], on="admin_dong", how="left")
-
-            # 있으면 덮어씀
-            agg["centroid_lat"] = agg["c_lat"].fillna(agg["centroid_lat"])
-            agg["centroid_lng"] = agg["c_lng"].fillna(agg["centroid_lng"])
-            agg = agg.drop(columns=[c for c in ["c_lat", "c_lng"] if c in agg.columns])
-
-    # 면적/인구 조인
-    def merge_metric(df_left: pd.DataFrame, df_ref: Optional[pd.DataFrame], value_cols: List[str]) -> pd.DataFrame:
-        if df_ref is None:
-            for v in value_cols:
-                if v not in df_left.columns:
-                    df_left[v] = 0
-            return df_left
-
-        name_col = coalesce_cols(df_ref, ["admin_dong", "행정동"])
-        code_col = coalesce_cols(df_ref, ["admin_dong_code", "행정동코드", "dong_code", "code"])
-
-        ref = df_ref.copy()
-        # 열 이름 표준화 시도
-        rename_map = {}
-        for v in value_cols:
-            cand = coalesce_cols(ref, [v, v.replace("_km2", ""), v.replace("_km2", "_km²"), v.replace("population", "pop")])
-            if cand:
-                rename_map[cand] = v
-        if rename_map:
-            ref = ref.rename(columns=rename_map)
-
-        # 조인 키 우선순위: 코드 -> 이름
-        if code_col and "admin_dong_code" in df_left.columns:
-            ref = ref.rename(columns={code_col: "admin_dong_code"})
-            keep_cols = ["admin_dong_code"] + [v for v in value_cols if v in ref.columns]
-            ref = ref[keep_cols].drop_duplicates()
-            return df_left.merge(ref, on="admin_dong_code", how="left")
-        elif name_col:
-            ref = ref.rename(columns={name_col: "admin_dong"})
-            keep_cols = ["admin_dong"] + [v for v in value_cols if v in ref.columns]
-            ref = ref[keep_cols].drop_duplicates()
-            return df_left.merge(ref, on="admin_dong", how="left")
-        else:
-            for v in value_cols:
-                if v not in df_left.columns:
-                    df_left[v] = 0
-            return df_left
-
-    agg = merge_metric(agg, area, ["area_km2"])
-    agg = merge_metric(agg, pop, ["population"])
-
-    # 결측치 채우기/타입 보장
-    for c in ["area_km2"]:
-        if c in agg.columns:
-            agg[c] = to_float(agg[c]).fillna(0.0)
-        else:
-            agg[c] = 0.0
-
-    for c in ["population"]:
-        if c in agg.columns:
-            agg[c] = to_int(agg[c])
-        else:
-            agg[c] = 0
-
-    # 유도 지표 계산
-    # toilets_per_10k = toilets_total / population * 10000
-    pop_nonpos = agg["population"] <= 0
-    agg["toilets_per_10k"] = 0.0
-    safe_pop = agg["population"].where(~pop_nonpos, other=1)  # 분모 0 방지
-    agg.loc[~pop_nonpos, "toilets_per_10k"] = (agg["toilets_total"] / safe_pop * 10000).astype(float)
-
-    # toilets_density_per_km2 = toilets_total / area_km2
-    area_nonpos = agg["area_km2"] <= 0
-    agg["toilets_density_per_km2"] = 0.0
-    safe_area = agg["area_km2"].where(~area_nonpos, other=1.0)
-    agg.loc[~area_nonpos, "toilets_density_per_km2"] = (agg["toilets_total"] / safe_area).astype(float)
-
-    # accessible_ratio = toilets_accessible / toilets_total
-    total_nonpos = agg["toilets_total"] <= 0
-    agg["accessible_ratio"] = 0.0
-    safe_total = agg["toilets_total"].where(~total_nonpos, other=1)
-    agg.loc[~total_nonpos, "accessible_ratio"] = (agg["toilets_accessible"] / safe_total).astype(float)
-
-    # 날짜/버전/출처
-    agg["updated_at"] = datetime.now().strftime("%Y-%m-%d")
-    agg["version"] = version
-    if "source" not in agg.columns:
-        agg["source"] = ""
-
-    # city/district/legal/admin 문자열 보장
-    for c in ["city", "district", "legal_dong", "admin_dong", "admin_dong_code"]:
-        if c not in agg.columns:
-            agg[c] = ""
-        agg[c] = agg[c].fillna("").astype(str)
-
-    # 컬럼 순서 정리 (데이터 사전 기준 경량본)
-    cols = [
-        "city", "district", "legal_dong", "admin_dong", "admin_dong_code",
-        "centroid_lat", "centroid_lng",
-        "area_km2", "population",
-        "toilets_total", "toilets_accessible",
-        "toilets_per_10k", "toilets_density_per_km2", "accessible_ratio",
-        "updated_at", "version", "source",
-    ]
-
-    # 누락된 컬럼 보호
-    for c in cols:
-        if c not in agg.columns:
-            agg[c] = 0 if c in ["population", "toilets_total", "toilets_accessible"] else ""
-
-    return agg[cols].sort_values(["district", "admin_dong"]).reset_index(drop=True)
-
-
-# -------------------- Main --------------------
+# -------- 메인 --------
 def main():
-    parser = argparse.ArgumentParser(description="Export by-dong dataset for dashboard")
-    parser.add_argument("--fac", default="data/validated/facilities_valid.csv", help="시설 단위 정제본 CSV")
-    parser.add_argument("--centers", default=None, help="(선택) 동 중심좌표 CSV (admin_dong_code/admin_dong + lat/lng)")
-    parser.add_argument("--area", default=None, help="(선택) 동 면적 CSV (admin_dong_code/admin_dong + area_km2)")
-    parser.add_argument("--pop", default=None, help="(선택) 동 인구 CSV (admin_dong_code/admin_dong + population)")
-    parser.add_argument("--out", default="app/data/output/by_dong_app.csv", help="대시보드 출력 CSV")
-    parser.add_argument("--city", default="부산광역시", help="도시명 고정값")
-    parser.add_argument("--district", default="남구", help="구/군 고정값")
-    parser.add_argument("--version", default="1.0.0", help="데이터/스키마 버전")
-    parser.add_argument("--encoding", default="utf-8-sig", help="CSV 인코딩")
-    parser.add_argument("--debug", action="store_true", help="디버그 로그 출력")
-    args = parser.parse_args()
+    ROOT = Path(__file__).resolve().parents[1]
+    DATA = ROOT / "data"
+    raw_csv = DATA / "raw" / "population" / "population_namgu.csv"
 
-    # 입력 로드
-    fac = load_csv(args.fac, encoding=args.encoding)
-    if fac is None:
-        print(f"[ERROR] 입력 파일을 찾을 수 없습니다: {args.fac}")
-        return
+    df = read_csv_smart(raw_csv)
 
-    centers = load_csv(args.centers, encoding=args.encoding) if args.centers else None
-    area = load_csv(args.area, encoding=args.encoding) if args.area else None
-    pop = load_csv(args.pop, encoding=args.encoding) if args.pop else None
+    # 1) 헤더/값 정리
+    df.columns = [norm_col(c) for c in df.columns]
+    first_col = df.columns[0]
+    df = df.rename(columns={first_col: "dong"})
 
-    if args.debug:
-        print("[DEBUG] facilities shape:", fac.shape)
-        print("[DEBUG] facilities cols :", list(fac.columns)[:50])
-        if centers is not None:
-            print("[DEBUG] centers cols    :", list(centers.columns)[:50])
-        if area is not None:
-            print("[DEBUG] area cols       :", list(area.columns)[:50])
-        if pop is not None:
-            print("[DEBUG] population cols :", list(pop.columns)[:50])
+    # 면적 컬럼 탐지(정규화된 이름 기준)
+    area_col_norm = detect_area_col(list(df.columns))
+    has_area = area_col_norm is not None
 
-    # 산출
-    by_dong = build_by_dong(
-        fac=fac,
-        centers=centers,
-        area=area,
-        pop=pop,
-        city_const=args.city,
-        district_const=args.district,
-        version=args.version,
-    )
+    # 2) 타입 정리: 면적은 float, 나머지는 int로 보정
+    for c in df.columns:
+        if c == "dong":
+            continue
+        if has_area and c == area_col_norm:
+            df[c] = df[c].apply(to_float_safe)
+        else:
+            df[c] = df[c].apply(to_int_safe)
 
-    # 저장
-    ensure_parent(args.out)
-    by_dong.to_csv(args.out, index=False, encoding=args.encoding)
+    # 3) 총인구 산출
+    cols = list(df.columns)
+    total_candidates = [c for c in cols if c not in ("dong", area_col_norm) and re.search(r"(총인구|인구수계|인구총|인구계|전체|^계$)", c)]
+    male_candidates = [c for c in cols if c not in ("dong", area_col_norm) and re.search(r"(남자|남)(계|합계)?$", c)]
+    female_candidates = [c for c in cols if c not in ("dong", area_col_norm) and re.search(r"(여자|여)(계|합계)?$", c)]
 
-    # 요약 출력
-    print("=== Export Summary ===")
-    print(f"Input           : {args.fac}")
-    print(f"Centers (opt)   : {args.centers}")
-    print(f"Area (opt)      : {args.area}")
-    print(f"Population (opt): {args.pop}")
-    print(f"Output          : {args.out}  ({len(by_dong)} rows)")
-    print(f"Columns         : {list(by_dong.columns)}")
+    def pick_population(row) -> float:
+        for c in total_candidates:
+            val = row.get(c, np.nan)
+            if pd.notna(val):
+                return float(val)
+        m = next((row[c] for c in male_candidates if pd.notna(row.get(c))), np.nan)
+        f = next((row[c] for c in female_candidates if pd.notna(row.get(c))), np.nan)
+        if pd.notna(m) and pd.notna(f):
+            return float(m) + float(f)
+        nums = [row[c] for c in cols if c not in ("dong", area_col_norm) and pd.notna(row[c])]
+        return float(np.nansum(nums)) if nums else np.nan
 
+    df["population"] = df.apply(pick_population, axis=1)
+
+    # 4) 동 필터 + 이름 정규화
+    df = df[df["dong"].apply(looks_like_dong)].copy()
+    df["dong"] = df["dong"].astype(str).map(normalize_dong_name)
+
+    # 5) 구명/면적/정리
+    df["district"] = "남구"
+    out_cols = ["district", "dong", "population"]
+    if has_area:
+        df["area_km2"] = pd.to_numeric(df[area_col_norm], errors="coerce")
+        out_cols.append("area_km2")
+
+    df = df[out_cols]
+    df["population"] = pd.to_numeric(df["population"], errors="coerce")
+    if "area_km2" in df.columns:
+        df["area_km2"] = pd.to_numeric(df["area_km2"], errors="coerce")
+
+    df = df.dropna(subset=["population"])
+    df = df[df["population"] >= 0]
+
+    # 6) 부모동 기준 집계(대연1동~6동 → 대연동 합계)
+    agg_map = {"population": "sum"}
+    if "area_km2" in df.columns:
+        agg_map["area_km2"] = "sum"
+    grouped = df.groupby(["district", "dong"], as_index=False).agg(agg_map)
+
+    # 7) 인구밀도(명/km²)
+    if "area_km2" in grouped.columns:
+        grouped["pop_density_km2"] = np.where(
+            (grouped["area_km2"] > 0) & (grouped["population"] > 0),
+            grouped["population"] / grouped["area_km2"],
+            np.nan
+        )
+    else:
+        grouped["pop_density_km2"] = np.nan
+
+    # 8) 저장
+    (DATA / "processed" / "population").mkdir(parents=True, exist_ok=True)
+    (DATA / "app").mkdir(parents=True, exist_ok=True)
+
+    out_proc = DATA / "processed" / "population" / "population_namgu.normalized.csv"
+    out_app  = DATA / "app" / "population_app.csv"
+
+    cols_export = ["district", "dong", "population", "area_km2", "pop_density_km2"]
+    for c in cols_export:
+        if c not in grouped.columns:
+            grouped[c] = np.nan
+    grouped = grouped[cols_export].sort_values(["district", "dong"])
+
+    grouped.to_csv(out_proc, index=False, encoding="utf-8")
+    grouped.to_csv(out_app,  index=False, encoding="utf-8")
+
+    print(f"[OK] saved: {out_proc}")
+    print(f"[OK] saved: {out_app}")
 
 if __name__ == "__main__":
     main()
