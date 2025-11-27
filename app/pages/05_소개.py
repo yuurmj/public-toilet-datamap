@@ -1,17 +1,16 @@
 import streamlit as st
 
-st.set_page_config(page_title="소개", page_icon="ℹ️", layout="wide")
+st.set_page_config(page_title="소개", layout="wide")
 
 # 스타일
 st.markdown("""
 <style>
-.main { background:#f8f9fd; }
-h1,h2,h3,h4 { color:#243269 !important; }
-.block-card {
-  border:1px solid #e5e7eb; border-radius:16px;
-  background:rgba(255,255,255,.92); backdrop-filter: blur(6px);
-  box-shadow:0 2px 8px rgba(15,23,42,.06);
-  padding:18px 20px; margin-bottom:16px;
+html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main { 
+    background-color: #FAFAFB !important;  
+}
+
+h1, h2, h3, h4 { 
+    color:#243269 !important; 
 }
 </style>
 """, unsafe_allow_html=True)
