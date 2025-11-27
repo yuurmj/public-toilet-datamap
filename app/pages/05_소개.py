@@ -12,6 +12,15 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 h1, h2, h3, h4 { 
     color:#243269 !important; 
 }
+
+// 카드형 섹션 스타일            
+.setting-card {  
+    background-color: #FFFFFF;
+    border-radius: 24px;
+    padding: 18px 24px;
+    margin: 10px 0 16px 0;
+    box-shadow: 0 10px 30px rgba(23, 34, 59, 0.06);
+}
 </style>
 """, unsafe_allow_html=True)
 
