@@ -1,4 +1,4 @@
-toilet_id,name,addr,lat,lon,male_wc,female_wc,male_wc_disabled,female_wc_disabled,accessible,district,dong
+toilet_id,name,addr,lat,lng,male_wc,female_wc,male_wc_disabled,female_wc_disabled,accessible,district,dong
 NMG-0001,21센츄리 상가,부산광역시 남구 수영로 312,35.13759,129.10092,13,6,0,0,0,남구,대연동
 NMG-0002,대연지구대 공중화장실,부산광역시 남구 수영로 328,35.13809,129.10186,3,2,1,1,1,남구,대연동
 NMG-0003,인터지스 주유소,부산광역시 남구 신선로 173,35.11106,129.08380,4,2,0,0,0,남구,감만동

@@ -1,16 +1,3 @@
-# mode by_dong: validated 시설 단위 → 동별 집계 CSV
-# mode app    : processed/*.normalized.csv → app/*.csv(population_app.csv, toilets_app.csv)
-# 실행 : python scripts/export_for_app.py --mode by_dong --fac data/validated/facilities_valid.csv --out app/data/output/by_dong_app.csv --debug
-
-from __future__ import annotations
-from pathlib import Path
-import argparse
-import os
-from datetime import datetime
-from typing import Optional, List
-import numpy as np
-import pandas as pd
-
 # scripts/process_population.py
 # - raw/population/population_namgu.csv → processed/population/population_namgu.normalized.csv
 # - processed/*.normalized.csv → app/population_app.csv
