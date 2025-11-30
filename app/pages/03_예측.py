@@ -2,21 +2,21 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-from sklearn.ensemble import RandomForestRegressor
-import numpy as np
 import base64
 
 st.set_page_config(page_title="공중화장실 데이터맵", layout="wide")
 
-
+# --- 이미지 base64 변환 ---
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
 profile_icon = img_to_base64("app/theme/PredictionModel.png")
 sim_icon = img_to_base64("app/theme/PredictionSimulation.png")
+arrow_down_icon = img_to_base64("app/theme/PurpleArrowDown.svg")
+arrow_down_icon2 = img_to_base64("app/theme/GreenArrowDown.svg")
 
-
+# --- 초기 데이터 ---
 if "df" not in st.session_state:
     st.session_state.df = pd.DataFrame({
         "행정동": ["대연1동", "용호1동", "우암동", "문현1동"],
@@ -33,164 +33,112 @@ if "df" not in st.session_state:
 df = st.session_state.df
 
 
-global_css = """
-<style>
-.filter-box {
-    background: #ffffff;
-    padding: 16px 22px;
-    border-radius: 16px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 17px;
-    color: #333;
-    font-weight: 500;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
-}
-.filter-check {
-    width: 22px;
-    height: 22px;
-}
-</style>
-"""
-st.markdown(global_css, unsafe_allow_html=True)
-
-
+# --- 컬럼 레이아웃 ---
 col1, col2 = st.columns([1, 1])
 
+# --- 필터, 테이블 ---
 with col1:
 
-    only_bad = st.checkbox("부족 지역만 보기", key="only_bad", label_visibility="collapsed")
-    sort_low = st.checkbox("설치율 낮은 순으로 정렬", key="sort_low", label_visibility="collapsed")
+    table_container = st.empty()
 
-    html = f"""
-    <style>
-    .predict-title {{
-        margin-left: 20px !important;
-    }}
-    .left-box {{
-        background: #ffffff;
-        padding: 20px 25px;
-        border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        margin-bottom: 20px;
-    }}
-    .legend-box {{
-        display: flex;
-        gap: 20px;
-        margin: 0px 30px 0px 0;
-        font-size: 17px;
-        align-items: center;
-        justify-content: flex-end;
-        font-weight: 600;
-    }}
-    .dot {{
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 6px;
-    }}
-    table, th, td {{
-        border: none !important;
-        text-align: center !important;
-    }}
-    .tbl {{
-        width: 100%;
-        border-collapse: separate !important;
-        border-spacing: 0 16px !important;
-        font-size: 15px;
-        color: #3F3D56;
-    }}
-    .tbl thead tr th {{
-        border-bottom: 1px solid #E5E7EB !important;
-        padding: 12px 5px;
-        font-size: 14px;
-        color: #030229;
-        text-align: center !important;
-        font-weight: 400;
-    }}
-    .tbl tbody tr td {{
-        padding: 16px 5px;
-        border: none !important;
-        text-align: left;
-        color:#030229;
-    }}
-    .grade-bad {{ background: #D6F3E7; padding: 6px 12px; border-radius: 9px;color:#030229; }}
-    .grade-mid {{ background: #9CA3AF; padding: 6px 12px; border-radius: 9px; color:#030229; }}
-    .grade-good {{ background: #E7E1FF; padding: 6px 12px; border-radius: 9px;color:#030229; }}
-    .arrow {{
-        font-size: 10px;
-        margin-left: 6px;
-        color: #9CA3AF;
-        border-radius:3px;
-    }}
-    div[data-testid="stCheckbox"] {{
-        display: none !important;
-    }}
+    # --- 렌더링 함수 ---
+    def render_table(only_bad=False, sort_low=False):
+        df_filtered = df.copy()
+        if only_bad:
+            df_filtered = df_filtered[df_filtered["예측등급"]=="부족"]
+        if sort_low:
+            df_filtered = df_filtered.sort_values(by="설치율")
 
-    .block-container {{
-        padding: 0 20px !important;
-    }}
-    </style>
-    <div class='left-box'>
-        <h4 class="predict-title">예측 결과</h4>
-        <div class='legend-box'>
-            <div><span class='dot' style='background:#93d7b0;'></span> 부족</div>
-            <div><span class='dot' style='background:#cfcfd3;'></span> 적정</div>
-            <div><span class='dot' style='background:#bfb8e8;'></span> 과잉</div>
-        </div>
+        html = f"""
+        <style>
+        .left-box {{
+            background: #ffffff;
+            padding: 20px 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }}
+        table, th, td {{ border: none !important; text-align: center !important; }}
+        .tbl {{ width: 100%; border-collapse: separate !important; border-spacing: 0 16px !important; font-size: 15px; color: #3F3D56; }}
+        .tbl thead tr th {{ border-bottom: 1px solid #E5E7EB !important; padding: 12px 5px; font-size: 14px; color: #030229; font-weight: 400; }}
+        .tbl tbody tr td {{ padding: 16px 5px; text-align: left; color:#030229; }}
+        .grade-bad {{ background: #D6F3E7; padding: 6px 12px; border-radius: 9px; }}
+        .grade-mid {{ background: #9CA3AF; padding: 6px 12px; border-radius: 9px; }}
+        .grade-good {{ background: #E7E1FF; padding: 6px 12px; border-radius: 9px; }}
+        </style>
+        <div class='left-box'>
+        <h4>예측 결과</h4>
         <table class='tbl'>
             <thead>
                 <tr>
-                    <th>행정동 <span class="arrow">▼</span></th>
-                    <th>예측 등급 <span class="arrow">▼</span></th>
-                    <th>권장설치수 <span class="arrow">▼</span></th>
-                    <th>설치율 <span class="arrow">▼</span></th>
-                    <th>인구 대비 화장실수 <span class="arrow">▼</span></th>
+                    <th>행정동</th>
+                    <th>예측 등급</th>
+                    <th>권장설치수</th>
+                    <th>설치율</th>
+                    <th>인구 대비 화장실수</th>
                 </tr>
             </thead>
             <tbody>
-    """
-
-    for _, r in df.iterrows():
-        grade = r["예측등급"]
-        grade_class = "grade-bad" if grade == "부족" else "grade-mid" if grade == "적정" else "grade-good"
-
-        html += f"""<tr>
-            <td>{r['행정동']}</td>
-            <td><span class='{grade_class}'>{r['예측등급']}</span></td>
-            <td>{r['권장설치수']}</td>
-            <td>{r['설치율']}</td>
-            <td>{r['인구대비화장실수']}</td>
-        </tr>
         """
 
-    html += """</tbody></table></div>"""
-    st.markdown(html, unsafe_allow_html=True)
+        for _, r in df_filtered.iterrows():
+            grade_class = (
+                "grade-bad" if r["예측등급"]=="부족" 
+                else "grade-mid" if r["예측등급"]=="적정" 
+                else "grade-good"
+            )
+            html += f"""<tr>
+                    <td>{r['행정동']}</td>
+                    <td><span class='{grade_class}'>{r['예측등급']}</span></td>
+                    <td>{r['권장설치수']}</td>
+                    <td>{r['설치율']}</td>
+                    <td>{r['인구대비화장실수']}</td>
+                </tr>
+            """
+        html += "</tbody></table></div>"
 
-    st.markdown(f"""
-    <div class="filter-box">
-        <input type="checkbox" class="filter-check" {'checked' if only_bad else ''} onclick="document.getElementById('only_bad').click()">
-        부족 지역만 보기
-    </div>
+        table_container.markdown(html, unsafe_allow_html=True)
 
-    <div class="filter-box">
-        <input type="checkbox" class="filter-check" {'checked' if sort_low else ''} onclick="document.getElementById('sort_low').click()">
-        설치율 낮은 순으로 정렬
-    </div>
+    st.markdown("""
+    <style>
+    div.stVerticalBlock, div.stHorizontalBlock {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap:0 20px !important;
+    }
+    div.stCheckbox {
+        background: #ffffff;
+        padding: 14px 22px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 12px;
+        width: 500px;
+    }
+    div.stCheckbox > label {
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+        display: flex;
+        align-items: center;
+    }
+    div.stCheckbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
+    with st.container():
+        only_bad = st.checkbox("부족 지역만 보기")
+        sort_low = st.checkbox("설치율 높은 순으로 정렬")
+
+    render_table(only_bad, sort_low)
+
+
+# --- 지도 ---
 with col2:
     st.markdown("### 지도 결과")
-
-    coords = {
-        "대연1동": (35.13, 129.10),
-        "용호1동": (35.12, 129.12),
-        "우암동": (35.11, 129.09),
-        "문현1동": (35.15, 129.07)
-    }
+    coords = {"대연1동": (35.13, 129.10), "용호1동": (35.12, 129.12), "우암동": (35.11, 129.09), "문현1동": (35.15, 129.07)}
     color_map = {"부족": "#93d7b0", "적정": "#cfcfd3", "과잉": "#bfb8e8"}
 
     m = folium.Map(location=[35.13, 129.10], zoom_start=13, tiles="cartodb positron")
@@ -209,52 +157,32 @@ with col2:
     st_folium(m, width=800, height=600)
 
 
+# --- 시뮬레이션 + 모델 정보 ---
+col3, col4 = st.columns([1.5, 1])
+# --- 시뮬레이션 + 모델 정보 ---
 col3, col4 = st.columns([1.5, 1])
 
-# 시뮬레이션 아이콘 base64 변환
-sim_icon = img_to_base64("app/theme/PredictionSimulation.png")
-
 with col3:
-
-    sim_icon = img_to_base64("app/theme/PredictionSimulation.png")
-    arrow_down_icon = img_to_base64("app/theme/PurpleArrowDown.svg")
-    arrow_down_icon2 = img_to_base64("app/theme/GreenArrowDown.svg")
-
     sim_html = f"""
     <style>
     .sim-box {{background: #ffffff; padding: 32px 10px; border-radius: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-top:15px;font-family: 'SUIT';}}
     .sim-title {{ font-size: 20px; font-weight: 700; margin-bottom: 32px; margin-left:20px;color: #030229;}}
     .sim-header {{text-align:center;display:grid;grid-template-columns: 40px 1fr 1fr 1fr 1fr;padding: 0 4px 16px 4px;font-size:15px;font-weight:600;color:#3f3d56;border-bottom: 1px solid #f1f1f1}}
     .sim-row {{display: grid;grid-template-columns: 60px 1fr 1fr 1fr 0.8fr 20px;align-items: center;padding: 20px 6px;border-bottom: 1px solid #f1f1f1;text-align:center;}}
+
     .sim-icon {{width:42px;height:42px;border-radius:50%;}}
     .sim-input-container {{display: flex;align-items: center; width: 100%;padding: 0 5%;  }}
-    .sim-text {{font-size:15px;font-weight:400;color:#030229;}}
-    .sim-btn {{padding:0px 15px;background:#bFA9F2;padding:10px 22px;color:white;font-size:15px;border-radius:12px;border:none;cursor:pointer;font-weight:400;}}
-    .sim-btn:hover {{opacity:0.9; }}
-    .sim-input {{width:100px;background:#f3f5f9;border-radius:12px;margin-left:5px;padding:8px 12px;border:none;outline:none;font-size:15px;font-weight:400;color:#030229;background;transparent;text-align:center;}}
-    .arrow-btn {{
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        padding: 4px;
-    }}
-    .arrow-btn img {{
-        width: 16px;
-        height: 16px;
-    }}
+    .sim-input {{width:100px;background:#f3f5f9;border-radius:12px;margin-left:5px;padding:8px 12px;border:none;outline:none;font-size:15px;font-weight:400;color:#030229;text-align:center;}}
+    .sim-btn {{padding:10px 22px;background:#bFA9F2;color:white;border-radius:12px;border:none;font-weight:400;}}
+    .arrow-btn {{display: inline-flex;align-items: center;justify-content: center;width: 32px;height: 32px;border-radius: 50%;border: none;background: transparent;padding: 4px;}}
+    .arrow-btn img {{width: 16px;height: 16px;}}
     </style>
     <div class='sim-box'>
         <div class='sim-title'>시뮬레이션</div>
         <div class='sim-header'>
             <div></div>
             <div>인구변화율</div>
-            <div >예산배율</div>
+            <div>예산배율</div>
             <div>장애인화장실 비율</div>
             <div>예측하기</div>
         </div>
@@ -263,60 +191,40 @@ with col3:
             <img src="data:image/png;base64,{sim_icon}" class="sim-icon">
             <div class="sim-input-container">
                 <input id="sim1_pop" class="sim-input" value="110%"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon}">
-                    </button>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
             </div>
             <div class="sim-input-container">
                 <input id="sim1_bud" class="sim-input" value="200%"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon}">
-                    </button>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
             </div>
             <div class="sim-input-container">
                 <input id="sim1_acc" class="sim-input" value="30%이상"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon}">
-                    </button>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
             </div>
-            <button class="sim-btn" onclick="window.location.href='/?sim1=1&pop='+document.getElementById('sim1_pop').value+'&bud='+document.getElementById('sim1_bud').value+'&acc='+document.getElementById('sim1_acc').value">
-                Simulation
-            </button>
+            <button class="sim-btn" onclick="window.location.href='/?sim1=1&pop='+document.getElementById('sim1_pop').value+'&bud='+document.getElementById('sim1_bud').value+'&acc='+document.getElementById('sim1_acc').value">Simulation</button>
         </div>
+        <!-- Row 2 -->
         <div class='sim-row'>
             <img src="data:image/png;base64,{sim_icon}" class="sim-icon">
             <div class="sim-input-container">
-                <input id="sim1_pop" class="sim-input" value="90%"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon2}">
-                    </button>
+                <input id="sim2_pop" class="sim-input" value="90%"/>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
             </div>
             <div class="sim-input-container">
-                <input id="sim1_bud" class="sim-input" value="50%"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon2}">
-                    </button>
+                <input id="sim2_bud" class="sim-input" value="50%"/>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
             </div>
             <div class="sim-input-container">
-                <input id="sim1_acc" class="sim-input" value="10%이상"/>
-                    <button class="arrow-btn">
-                        <img src="data:image/svg+xml;base64,{arrow_down_icon2}">
-                    </button>
+                <input id="sim2_acc" class="sim-input" value="10%이상"/>
+                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
             </div>
-            <button class="sim-btn" onclick="window.location.href='/?sim1=1&pop='+document.getElementById('sim1_pop').value+'&bud='+document.getElementById('sim1_bud').value+'&acc='+document.getElementById('sim1_acc').value">
-                Simulation
-            </button>
+            <button class="sim-btn" onclick="window.location.href='/?sim2=1&pop='+document.getElementById('sim2_pop').value+'&bud='+document.getElementById('sim2_bud').value+'&acc='+document.getElementById('sim2_acc').value">Simulation</button>
         </div>
     </div>
     """
-
     st.markdown(sim_html, unsafe_allow_html=True)
 
-
-
-
 with col4:
-
     html_model = f"""
     <style>
     .model-box {{
@@ -330,28 +238,10 @@ with col4:
         gap: 25px;
         width: 100%;
     }}
-    .model-img {{
-        width: 85px;
-        height: 85px;
-        border-radius: 50%;
-        object-fit: cover;
-    }}
-    .model-title {{
-        font-size: 22px;
-        font-weight: 700;
-        color: #1f1f1f;
-        margin-bottom: 14px;
-    }}
-    .model-text {{
-        font-size: 16px;
-        color: #444;
-        line-height: 1.6;
-    }}
-    .model-divider {{
-        width: 100%;
-        border-bottom: 1px solid #eaeaea;
-        margin-top: 22px;
-    }}
+    .model-img {{ width: 85px; height: 85px; border-radius: 50%; object-fit: cover; }}
+    .model-title {{ font-size: 22px; font-weight: 700; color: #1f1f1f; margin-bottom: 14px; }}
+    .model-text {{ font-size: 16px; color: #444; line-height: 1.6; }}
+    .model-divider {{ width: 100%; border-bottom: 1px solid #eaeaea; margin-top: 22px; }}
     </style>
     <div class="model-box">
         <img src="data:image/png;base64,{profile_icon}" class="model-img">
@@ -366,5 +256,4 @@ with col4:
         <div class="model-divider"></div>
     </div>
     """
-
     st.markdown(html_model, unsafe_allow_html=True)
