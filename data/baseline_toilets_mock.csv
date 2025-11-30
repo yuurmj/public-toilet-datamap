@@ -1,0 +1,4 @@
+toilet_id,name,addr,lat,lng,male_wc,female_wc,male_wc_disabled,female_wc_disabled,accessible,district,dong
+SUY-0001,남천수변화장실,수영구 남천동 123,35.1451,129.1132,2,3,0,1,1,수영구,남천동
+SUY-0002,광안리해변화장실,수영구 광안동 45,35.1539,129.1188,3,4,1,1,1,수영구,광안동
+YEJ-0001,연산문화공원화장실,연제구 연산동 78,35.1762,129.0801,2,2,0,0,0,연제구,연산동
