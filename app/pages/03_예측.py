@@ -5,7 +5,6 @@ from streamlit_folium import st_folium
 import base64
 from ml.run_prediction import run_prediction
 
-from ml.run_prediction import run_prediction
 
 # 최초 로딩 시 기본 예측 실행
 if "df" not in st.session_state:
