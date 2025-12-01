@@ -25,19 +25,16 @@ icon3 = img_to_base64("app/theme/DashBoardIcon3.png")
 icon4 = img_to_base64("app/theme/DashBoardIcon4.png")
 icon5 = img_to_base64("app/theme/DashBoardIcon5.png")
 
-# -------------------------------------------------
-# 🔥 실제 데이터 불러오기 & 예측 실행
-# -------------------------------------------------
-df = run_prediction(pop_rate=10)   # 30만 인구 기반 → pop_rate * 30,000
+df = run_prediction()   # pop_rate 필요 없음 (실제 인구 사용)
 
 # KPI 계산
 total_toilets = df["시설수"].sum()
 acc_ratio = (df["장애인비율"] * df["시설수"]).sum() / total_toilets
 
-population = 300000
+population = df["인구"].sum()
 toilets_per_100k = total_toilets / population * 100000
 
-improve_cnt = (df["예측등급"] == "부족").sum()  # 개선이 필요한 동 개수
+improve_cnt = (df["예측등급"] == "부족").sum()
 
 dong_counts = df[["행정동", "시설수"]]
 
@@ -76,7 +73,7 @@ body, [class*="css"] {
 
 .donut-wrapper { display: flex; flex-direction: column; align-items: center; padding: 30px 0 35px 0 !important;}
 .donut-chart { width: 210px !important; height: 210px !important; border-radius: 50% !important;
- display: flex !important; justify-content: center !important; align-items: center !important;
+   display: flex !important; justify-content: center !important; align-items: center !important;
     box-shadow:
         0 18px 30px rgba(0, 0, 0, 0.18),
         0 10px 20px rgba(0, 0, 0, 0.10),
@@ -208,21 +205,24 @@ with left:
     # ----------------------------
     # 2) 화장실 CSV 불러오기 + 좌표 정리
     # ----------------------------
-    df_toilet = pd.read_csv("data/raw/toilets_namgu.csv")
+    df_toilet = pd.read_csv("data/raw/toilets/toilets_namgu.csv")
 
     df_toilet["lat"] = pd.to_numeric(df_toilet["lat"], errors="coerce")
-    df_toilet["lon"] = pd.to_numeric(df_toilet["lon"], errors="coerce")
+    df_toilet["lng"] = pd.to_numeric(df_toilet["lng"], errors="coerce")
 
-    df_toilet = df_toilet.dropna(subset=["lat", "lon"])
+    df_toilet = df_toilet.dropna(subset=["lat", "lng"])
 
     # ----------------------------
     # 3) 거리 계산 (정확하게)
     # ----------------------------
     df_toilet["distance"] = df_toilet.apply(
-        lambda r: haversine(user_lat, user_lon, r["lat"], r["lon"]),
+        lambda r: haversine(user_lat, user_lon, r["lat"], r["lng"]),
         axis=1
     )
 
+    # ----------------------------
+    # 4) 반경 내 화장실 → 최소 5개 보장
+    # ----------------------------
 
     # 반경 700m 이내의 화장실들
     near = df_toilet[df_toilet["distance"] <= 0.7]
@@ -232,7 +232,14 @@ with left:
         near = df_toilet.nsmallest(5, "distance")
 
 
-    m = folium.Map(location=[user_lat, user_lon], zoom_start=15,tiles="CartoDB Positron")
+    # ----------------------------
+    # 5) 지도 생성
+    # ----------------------------
+    m = folium.Map(
+        location=[user_lat, user_lon],
+        zoom_start=15,
+        tiles="CartoDB Positron"
+    )
 
     # 내 위치 마커 (빨강)
     folium.CircleMarker(
@@ -246,11 +253,11 @@ with left:
     # 가까운 화장실 마커 5개 이상 표시 (파랑)
     for _, row in near.iterrows():
         folium.CircleMarker(
-            [row["lat"], row["lon"]],
+            [row["lat"], row["lng"]],
             radius=6,
-            color="pulple",
+            color="blue",
             fill=True,
-            fill_color="purple"
+            fill_color="blue"
         ).add_to(m)
 
     st_folium(m, height=500, width=900)
@@ -260,28 +267,31 @@ with left:
             return "badge-good"
         elif grade == "부족":
             return "badge-bad"
-        else:  # 과잉
-            return "badge-over"
+        return "badge-over"
 
-    # 결과 카드 생성
     def make_rows(df_part):
         html = ""
         for _, row in df_part.iterrows():
-            badge_class = get_badge_class(row["예측등급"])
+            badge = get_badge_class(row["예측등급"])
             html += f"""<div class="ai-row">
         <div class="ai-name">{row['행정동']}</div>
-        <div class="ai-badge {badge_class}">{row['예측등급']}</div>
+        <div class="ai-badge {badge}">{row['예측등급']}</div>
         <div class="ai-rate">{row['설치율']}</div>
         <div class="ai-desc">{row['인구대비화장실수']}</div>
     </div>
     """
         return html
 
-
-    half = len(df)//2
-    ai_html = f"""<div class="ai-table-card-box"><div class="ai-title">AI 예측 결과 카드</div><div class="ai-wrapper"><div class="ai-col">{make_rows(df.iloc[:half])}</div><div class="ai-col">{make_rows(df.iloc[half:])}</div></div></div>"""
+    half = len(df) // 2
+    ai_html = f"""<div class="ai-table-card-box">
+        <div class="ai-title">AI 예측 결과 카드</div>
+        <div class="ai-wrapper">
+            <div class="ai-col">{make_rows(df.iloc[:half])}</div>
+            <div class="ai-col">{make_rows(df.iloc[half:])}</div>
+        </div>
+    </div>
+    """
     st.markdown(ai_html, unsafe_allow_html=True)
-
 
 # -------------------------------------------------
 # 오른쪽 바 차트 + 도넛 차트
@@ -314,10 +324,14 @@ with right:
 
     # 🔥 장애인 화장실 비율 도넛
     # 장애인 화장실 설치 비율(0~1 값)
-    acc_ratio = 0.422   # 예: 0.422 → 42.2%
+    installed = 0.422
+    not_installed = 1 - installed
 
-    installed_deg = acc_ratio * 360  # 도넛 각도 계산
+    # 360도 변환
+    installed_deg = installed * 360
+    not_installed_deg = 360 - installed_deg
 
+    # 도넛 CSS 동적 생성
     donut_style = f"""
     background: conic-gradient(
         #9bdcc9 0deg {installed_deg}deg,
@@ -325,6 +339,7 @@ with right:
     );
     """
 
+    # HTML 렌더링
     html_pie = f"""
     <div class="main-box">
         <div class="right-card">장애인 화장실 비율</div>
@@ -349,5 +364,3 @@ with right:
     """
 
     st.markdown(html_pie, unsafe_allow_html=True)
-
-

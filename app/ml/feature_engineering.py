@@ -59,7 +59,7 @@ def normalize_dong(name):
 # ---------------------------------------------------------
 def extract_features(pop_rate=1.0):
 
-    df = pd.read_csv("data/raw/toilets_namgu.csv")
+    df = pd.read_csv("data/raw/toilets/toilets_namgu.csv")
 
     # ---------------------------------------
     # (1) 동 이름 정규화
@@ -87,7 +87,7 @@ def extract_features(pop_rate=1.0):
     # ---------------------------------------
     # (4) 군집 수 계산
     # ---------------------------------------
-    coords = df[["lat", "lon"]].values
+    coords = df[["lat", "lng"]].values
     kmeans = KMeans(n_clusters=4, random_state=42)
     df["cluster"] = kmeans.fit_predict(coords)
 

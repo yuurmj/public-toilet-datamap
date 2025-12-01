@@ -11,6 +11,9 @@ def run_prediction(pop_rate=1.0, budget_rate=1.0, acc_min_rate=0.0):
     train_model(budget_rate=budget_rate)
 
     df = pd.read_csv("data/processed/group_features.csv")
+
+    df.rename(columns={"dong": "행정동"}, inplace=True)
+
     model = joblib.load("data/processed/recommend_model.pkl")
 
     X = df[[
@@ -38,12 +41,11 @@ def run_prediction(pop_rate=1.0, budget_rate=1.0, acc_min_rate=0.0):
     df["설치율"] = df["설치율값"].round().astype(int).astype(str) + "%"
 
     df["인구대비화장실수"] = df["시설수"].apply(lambda x: f"{x}/18000명")
-    df.rename(columns={"dong": "행정동"}, inplace=True)
 
     result = df[[
         "행정동", "예측등급", "권장설치수", "설치율",
         "인구대비화장실수", "시설수",
-        "장애인비율", "여성비율", "군집수"
+        "장애인비율", "여성비율", "군집수", "인구", "면적"
     ]]
 
     os.makedirs("data/processed", exist_ok=True)
