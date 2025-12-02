@@ -3,4 +3,5 @@ streamlit-folium==0.25.2
 matplotlib==3.10.7
 scipy==1.16.3
 scikit-learn==1.7.2
+streamlit-js-eval==0.1.7
 # Add other dependencies as needed (pandas, numpy, folium, etc.)
