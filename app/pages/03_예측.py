@@ -5,17 +5,13 @@ from streamlit_folium import st_folium
 import base64
 from ml.run_prediction import run_prediction
 
-
-# 최초 로딩 시 기본 예측 실행
 if "df" not in st.session_state:
     st.session_state.df = run_prediction()
 
 df = st.session_state.df    
 
-
 st.set_page_config(page_title="공중화장실 데이터맵", layout="wide")
 
-# --- 이미지 base64 변환 ---
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -27,12 +23,8 @@ purple_down = img_to_base64("app/theme/PurpleArrowDown.svg")
 green_up = img_to_base64("app/theme/GreenArrowDown.svg")
 green_down = img_to_base64("app/theme/GreenArrowDown.svg")
 
-
-
-# --- 컬럼 레이아웃 ---
 col1, col2 = st.columns([1, 1])
 
-# --- 필터, 테이블 ---
 with col1:
 
     table_container = st.empty()
@@ -47,6 +39,12 @@ with col1:
 
         html = f"""
         <style>
+        div.stMainBlockContainer {{
+            width: 100% !important;
+            max-width: 100% !important;
+            gap:0 0px !important;
+            padding:25px 0 0 0 !important;
+        }}
         .left-box {{
             background: #ffffff;
             padding: 20px 25px;
@@ -130,11 +128,7 @@ with col1:
 
     render_table(only_bad, sort_low)
 
-
-# --- 지도 ---
 with col2:
-    st.markdown("### 지도 결과")
-
     coords = {
         "감만동": (35.1225, 129.0845),
         "대연동": (35.1370, 129.0913),
@@ -167,32 +161,80 @@ with col2:
 
     st_folium(m, width=800, height=600)
 
-
 col3, col4 = st.columns([1.5, 1])
 
 with col3:
-
     st.markdown("""
     <style>
-    .sim-box {background: #ffffff; padding: 32px 10px; border-radius: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-top:15px;font-family: 'SUIT';}
-    .sim-title { font-size: 20px; font-weight: 700; margin-bottom: 32px; margin-left:20px;color: #030229;}}
-    .sim-header {text-align:center; display:grid;grid-template-columns: 40px 1fr 1fr 1fr 1fr;padding: 0 4px 16px 4px;font-size:15px;font-weight:600;color:#3f3d56;border-bottom: 1px solid #f1f1f1}
-    .sim-row {display: grid; grid-template-columns: 60px 1fr 1fr 1fr 0.8fr 20px;align-items: center;padding: 20px 6px;border-bottom: 1px solid #f1f1f1;text-align:center;}
-    .value-box {
-        font-size: 18px;
-        background: #f3f5f9;
-        padding: 10px 20px;
-        border-radius: 12px;
-        text-align: center;
-        width: 120px;
+    div[data-testid="stVerticalBlock"]:has(.sim-title) {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 30px 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        font-family: 'SUIT', sans-serif;
+        min-height: 310px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 0px !important;
     }
+    .sim-title { font-size: 20px; font-weight: 800; color: #111; margin-bottom: 25px; }
+    .sim-header { font-size: 13px; font-weight: 600; color: #888; text-align: center; margin-bottom: 5px; margin-top:5px;}
+    .sim-value { font-size: 18px; font-weight: 500; color: #333; text-align:center;  line-height: 40px; }
+    button[kind="secondary"] {
+        background-color: white !important;
+        padding: 0px !important;
+        min-height: 0px !important;
+        height: 20px !important;
+        width: 100% !important;
+        border-radius: 4px !important;
+        font-size: 10px !important;
+        line-height: 1 !important;
+    }
+    div[data-testid*="stKey-s1"] button[kind="secondary"] {
+        color: #CDB5FF !important;
+        border: 1px solid #CDB5FF !important;
+    }
+    div[data-testid*="stKey-s1"] button[kind="secondary"]:hover {
+        background-color: #F3EFFF !important;
+    }
+    div[data-testid*="stKey-s2"] button[kind="secondary"] {
+        color: #89D8C0 !important;
+        border: 1px solid #89D8C0 !important;
+    }
+    div[data-testid*="stKey-s2"] button[kind="secondary"]:hover {
+        background-color: #E8F8F3 !important;
+    }
+    button[kind="primary"] {
+        background-color: #CDB5FF !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        height: 45px !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
+    button[kind="secondary"] {
+        background-color: #ffffff !important;
+        color: #CDB5FF !important;
+        border: none !important;
+        height: 18px !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #B695FF !important;
+    }
+    div.stVerticalBlock {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap:0 20px !important;
+    }
+    div[data-testid="column"] > div > div[data-testid="stVerticalBlock"] { gap: 2px !important; }
+    .profile-icon { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
     </style>
     """, unsafe_allow_html=True)
 
-
-    # -----------------------------
-    # 초기 세션 상태
-    # -----------------------------
     defaults = {
         "sim1_pop": 110, "sim1_bud": 200, "sim1_acc": 30,
         "sim2_pop": 90,  "sim2_bud": 50,  "sim2_acc": 10
@@ -201,69 +243,92 @@ with col3:
         if k not in st.session_state:
             st.session_state[k] = v
 
+    st.markdown('<div class="sim-title">시뮬레이션</div>', unsafe_allow_html=True)
+    
+    h0, h1, h2, h3, h4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.6])
+    with h1: st.markdown("<div class='sim-header'>인구변화율</div>", unsafe_allow_html=True)
+    with h2: st.markdown("<div class='sim-header'>예산배율</div>", unsafe_allow_html=True)
+    with h3: st.markdown("<div class='sim-header'>장애인화장실 비율</div>", unsafe_allow_html=True)
+    with h4: st.markdown("<div class='sim-header'>예측하기</div>", unsafe_allow_html=True)
 
-    # -----------------------------
-    # 값 조절 함수
-    # -----------------------------
-    def arrow_row(label, key, step):
-        """화살표 증가/감소 row 생성 (Streamlit-only)"""
-        col_l, col_m1, col_m2, col_r = st.columns([1,1,1,1])
-        with col_l:
-            st.write("")
-            st.write(f"**{label}**")
-        with col_m1:
-            if st.button("▲", key=f"{key}_up"):
-                st.session_state[key] += step
-        with col_m2:
-            if st.button("▼", key=f"{key}_down"):
-                st.session_state[key] -= step
-        with col_r:
-            st.markdown(f"<div class='value-box'>{st.session_state[key]}%</div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
 
+    r1_c0, r1_c1, r1_c2, r1_c3, r1_c4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.2])
 
-    # -----------------------------
-    # 시뮬레이션 1
-    # -----------------------------
-    st.markdown("""<div class='sim-box'><div class='sim-title'>시뮬레이션</div><div class='sim-header'><div></div><div>인구변화율</div><div>예산배율</div><div>장애인화장실 비율</div><div>예측하기</div></div>""", unsafe_allow_html=True)
+    with r1_c0:
+        st.markdown(f"""<div style="display:flex; justify-content:center; align-items:center; height:42px;">
+            <img src="data:image/png;base64,{sim_icon}" class="profile-icon"></div>""", unsafe_allow_html=True)
 
+    with r1_c1:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_pop']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_p_up", type="secondary"): st.session_state["sim1_pop"] += 10; st.rerun()
+            if st.button("▼", key="s1_p_dw", type="secondary"): st.session_state["sim1_pop"] -= 10; st.rerun()
 
-    arrow_row("인구변화율", "sim1_pop", 10)
-    arrow_row("예산배율", "sim1_bud", 10)
-    arrow_row("장애인 비율", "sim1_acc", 5)
+    with r1_c2:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_bud']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_b_up", type="secondary"): st.session_state["sim1_bud"] += 10; st.rerun()
+            if st.button("▼", key="s1_b_dw", type="secondary"): st.session_state["sim1_bud"] -= 10; st.rerun()
 
-    if st.button("Simulation (1차)", key="sim1_run_btn"):
-        st.session_state.df = run_prediction(
-            st.session_state.sim1_pop / 100,
-            st.session_state.sim1_bud / 100,
-            st.session_state.sim1_acc / 100
-        )
-        st.rerun()
+    with r1_c3:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_acc']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_a_up", type="secondary"): st.session_state["sim1_acc"] += 5; st.rerun()
+            if st.button("▼", key="s1_a_dw", type="secondary"): st.session_state["sim1_acc"] -= 5; st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    with r1_c4:
+        if st.button("Simulation", key="run_s1", type="primary"):
+            st.session_state.df = run_prediction(st.session_state['sim1_pop']/100, st.session_state['sim1_bud']/100, st.session_state['sim1_acc']/100)
+            st.rerun()
 
+    st.markdown("<div style='margin: 15px 0px; border-top: 1px solid #F0F0F0;padding-bottom:15px;'></div>", unsafe_allow_html=True)
 
-    # -----------------------------
-    # 시뮬레이션 2
-    # -----------------------------
-    st.markdown("<div class='sim-box'>", unsafe_allow_html=True)
-    st.markdown("<div class='sim-title'>시뮬레이션 2차</div>", unsafe_allow_html=True)
-    st.markdown("<div class='sim-header'>인구변화율 / 예산배율 / 장애인화장실 비율</div>", unsafe_allow_html=True)
+    r2_c0, r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.2])
 
-    arrow_row("인구변화율", "sim2_pop", 10)
-    arrow_row("예산배율", "sim2_bud", 10)
-    arrow_row("장애인 비율", "sim2_acc", 5)
+    with r2_c0:
+        st.markdown(f"""<div style="display:flex; justify-content:center; align-items:center; height:42px;">
+            <img src="data:image/png;base64,{sim_icon}" class="profile-icon" style="opacity:1;"></div>""", unsafe_allow_html=True)
 
-    if st.button("Simulation (2차)", key="sim2_run_btn"):
-        st.session_state.df = run_prediction(
-            st.session_state.sim2_pop / 100,
-            st.session_state.sim2_bud / 100,
-            st.session_state.sim2_acc / 100
-        )
-        st.rerun()
+    with r2_c1:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_pop']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_p_up", type="secondary"): st.session_state["sim2_pop"] += 10; st.rerun()
+            if st.button("▼", key="s2_p_dw", type="secondary"): st.session_state["sim2_pop"] -= 10; st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    with r2_c2:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_bud']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_b_up", type="secondary"): st.session_state["sim2_bud"] += 10; st.rerun()
+            if st.button("▼", key="s2_b_dw", type="secondary"): st.session_state["sim2_bud"] -= 10; st.rerun()
 
+    with r2_c3:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_acc']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_a_up", type="secondary"): st.session_state["sim2_acc"] += 5; st.rerun()
+            if st.button("▼", key="s2_a_dw", type="secondary"): st.session_state["sim2_acc"] -= 5; st.rerun()
 
+    with r2_c4:
+        if st.button("  Simulation  ", key="run_s2", type="primary"):
+            st.session_state.df = run_prediction(st.session_state['sim2_pop']/100, st.session_state['sim2_bud']/100, st.session_state['sim2_acc']/100)
+            st.rerun()
+
+    st.markdown("""
+    <script>
+    const btns = window.parent.document.querySelectorAll('button[kind="primary"]');
+    if (btns.length > 1) {
+        btns[1].style.backgroundColor = "#89D8C0";
+        btns[1].addEventListener('mouseover', function() { this.style.backgroundColor = "#7AC4AD"; });
+        btns[1].addEventListener('mouseout', function() { this.style.backgroundColor = "#89D8C0"; });
+    }
+    </script>
+    """, unsafe_allow_html=True)
 
 with col4:
     html_model = f"""
