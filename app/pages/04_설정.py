@@ -74,9 +74,9 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 
 # 기본 설정값
 DEFAULT_SETTINGS = {
-    "show_accessible_toilets": True,
-    "auto_detect_location": False,
-    "default_map_center": "남구 대연동",
+    "show_disabled": False,
+    "auto_detect": False,
+    "map_center_loc": "남구 대연동",
     "last_data_update": date(2025, 11, 17),
     "language": "ko",
 }
