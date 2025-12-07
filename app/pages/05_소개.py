@@ -53,36 +53,15 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 
 /* 팀 소개 내부 레이아웃 */
 .team-layout {
-    display:flex;
-    gap:32px;
-    align-items:flex-start;
-    margin-top:16px;           /* 제목과 내용 사이 간격 */
-}
-
-/* 아희유 세로 글씨 */
-.team-letters {
-    font-size:26px;
-    font-weight:700;
-    color:#8FDAC8;
-    line-height:1.5;
-    margin-left:60px;          /* 카드 왼쪽에서 살짝 안쪽으로 */
-}
-.team-letters span {
-    display:block;
+    margin-top:7px;           /* 제목과 내용 사이 간격 */
 }
 
 /* 오른쪽 이름 리스트 */
 .team-layout ul {
     margin:0;
-    padding-left:1.1rem;
+    padding-left:0.2rem;
     font-size:25px;
-    line-height:1.6;
-}
-
-/* 다른 카드들도 리스트 글자 조금 키우기 */
-.setting-card ul,
-.setting-card ol {
-    font-size:19px;
+    line-height:2.6;
 }
 </style>
 """,
@@ -91,26 +70,24 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 
 TEAM_CARD_HTML = dedent("""
 <div class="setting-card">
-  <div class="card-title-center" style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+  <div class="card-title-center" style="display:flex; align-items:center; gap:8px;">
     <img src="https://img.icons8.com/?size=100&id=52966&format=png&color=000000"
-         style="width:26px; height:26px; margin-right:8px;" />
-    <span style="font-weight:700; font-size:25px;">팀 소개</span>
+         style="width:26px; height:26px;" />
+    <span style="font-weight:800; font-size:25px;">팀 소개</span>
   </div>
 
   <div class="team-layout"
        style="display:flex; align-items:flex-start; gap:25px; margin-left:120px; 
-              font-size:24px; line-height:1.3;">
-    <!-- 아희유 세로 글씨 (개별 스타일 최소화) -->
+              font-size:30px; font-weight: 900; line-height:1.55;">
     <div style="font-weight:700; color:#8FDAC8;">
       <div>아</div>
       <div>희</div>
       <div>유</div>
     </div>
-    <!-- 리스트 (별도 line-height 없음) -->
-    <ul style="margin:0; padding-left:1rem;">
-      <li><a href="https://github.com/aranlll" target="_blank">정아란</a> : 커미터</li>
-      <li><a href="https://github.com/seohuiwon11" target="_blank">서희원</a> : 메인테이너</li>
-      <li><a href="https://github.com/yuurmj" target="_blank">정유림</a> : 리더</li>
+    <ul style="margin:0; color:#5a5a5a;">
+      <li><a href="https://github.com/aranlll" target="_blank">정아란</a> (커미터)</li>
+      <li><a href="https://github.com/seohuiwon11" target="_blank">서희원</a> (메인테이너)</li>
+      <li><a href="https://github.com/yuurmj" target="_blank">정유림</a> (리더)</li>
     </ul>
 
   </div>
