@@ -3,40 +3,28 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import base64
+from ml.run_prediction import run_prediction
+
+if "df" not in st.session_state:
+    st.session_state.df = run_prediction()
+
+df = st.session_state.df    
 
 st.set_page_config(page_title="공중화장실 데이터맵", layout="wide")
 
-# --- 이미지 base64 변환 ---
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
 profile_icon = img_to_base64("app/theme/PredictionModel.png")
 sim_icon = img_to_base64("app/theme/PredictionSimulation.png")
-arrow_down_icon = img_to_base64("app/theme/PurpleArrowDown.svg")
-arrow_down_icon2 = img_to_base64("app/theme/GreenArrowDown.svg")
+purple_up = img_to_base64("app/theme/PurpleArrowDown.svg")
+purple_down = img_to_base64("app/theme/PurpleArrowDown.svg")
+green_up = img_to_base64("app/theme/GreenArrowDown.svg")
+green_down = img_to_base64("app/theme/GreenArrowDown.svg")
 
-# --- 초기 데이터 ---
-if "df" not in st.session_state:
-    st.session_state.df = pd.DataFrame({
-        "행정동": ["대연1동", "용호1동", "우암동", "문현1동"],
-        "인구": [30000, 42000, 18000, 25000],
-        "면적": [2.5, 3.1, 1.2, 2.0],
-        "시설수": [8, 10, 5, 6],
-        "장애인비율": [0.25, 0.35, 0.15, 0.20],
-        "예측등급": ["부족", "적정", "과잉", "부족"],
-        "권장설치수": [2, 0, 0, 1],
-        "설치율": ["65%", "90%", "110%", "75%"],
-        "인구대비화장실수": ["1/1800명", "2/1800명", "3/1800명", "1/1800명"]
-    })
-
-df = st.session_state.df
-
-
-# --- 컬럼 레이아웃 ---
 col1, col2 = st.columns([1, 1])
 
-# --- 필터, 테이블 ---
 with col1:
 
     table_container = st.empty()
@@ -51,6 +39,12 @@ with col1:
 
         html = f"""
         <style>
+        div.stMainBlockContainer {{
+            width: 100% !important;
+            max-width: 100% !important;
+            gap:0 0px !important;
+            padding:25px 0 0 0 !important;
+        }}
         .left-box {{
             background: #ffffff;
             padding: 20px 25px;
@@ -134,95 +128,207 @@ with col1:
 
     render_table(only_bad, sort_low)
 
-
-# --- 지도 ---
 with col2:
-    st.markdown("### 지도 결과")
-    coords = {"대연1동": (35.13, 129.10), "용호1동": (35.12, 129.12), "우암동": (35.11, 129.09), "문현1동": (35.15, 129.07)}
+    coords = {
+        "감만동": (35.1225, 129.0845),
+        "대연동": (35.1370, 129.0913),
+        "문현동": (35.1476, 129.0761),
+        "용당동": (35.1290, 129.1037),
+        "용호동": (35.1154, 129.1133),
+        "우암동": (35.1318, 129.0788)
+    }
+
     color_map = {"부족": "#93d7b0", "적정": "#cfcfd3", "과잉": "#bfb8e8"}
 
     m = folium.Map(location=[35.13, 129.10], zoom_start=13, tiles="cartodb positron")
 
     for _, r in df.iterrows():
+        dong = r["행정동"]
+
+        # 좌표가 없으면 스킵
+        if dong not in coords:
+            continue
+
         folium.CircleMarker(
-            location=coords[r["행정동"]],
+            location=coords[dong],
             radius=25,
             color=color_map[r["예측등급"]],
             fill=True,
             fill_color=color_map[r["예측등급"]],
             fill_opacity=0.9,
-            popup=f"{r['행정동']} ({r['예측등급']})"
+            popup=f"{dong} ({r['예측등급']})"
         ).add_to(m)
 
     st_folium(m, width=800, height=600)
 
-
-# --- 시뮬레이션 + 모델 정보 ---
-col3, col4 = st.columns([1.5, 1])
-# --- 시뮬레이션 + 모델 정보 ---
 col3, col4 = st.columns([1.5, 1])
 
 with col3:
-    sim_html = f"""
+    st.markdown("""
     <style>
-    .sim-box {{background: #ffffff; padding: 32px 10px; border-radius: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); margin-top:15px;font-family: 'SUIT';}}
-    .sim-title {{ font-size: 20px; font-weight: 700; margin-bottom: 32px; margin-left:20px;color: #030229;}}
-    .sim-header {{text-align:center;display:grid;grid-template-columns: 40px 1fr 1fr 1fr 1fr;padding: 0 4px 16px 4px;font-size:15px;font-weight:600;color:#3f3d56;border-bottom: 1px solid #f1f1f1}}
-    .sim-row {{display: grid;grid-template-columns: 60px 1fr 1fr 1fr 0.8fr 20px;align-items: center;padding: 20px 6px;border-bottom: 1px solid #f1f1f1;text-align:center;}}
-
-    .sim-icon {{width:42px;height:42px;border-radius:50%;}}
-    .sim-input-container {{display: flex;align-items: center; width: 100%;padding: 0 5%;  }}
-    .sim-input {{width:100px;background:#f3f5f9;border-radius:12px;margin-left:5px;padding:8px 12px;border:none;outline:none;font-size:15px;font-weight:400;color:#030229;text-align:center;}}
-    .sim-btn {{padding:10px 22px;background:#bFA9F2;color:white;border-radius:12px;border:none;font-weight:400;}}
-    .arrow-btn {{display: inline-flex;align-items: center;justify-content: center;width: 32px;height: 32px;border-radius: 50%;border: none;background: transparent;padding: 4px;}}
-    .arrow-btn img {{width: 16px;height: 16px;}}
+    div[data-testid="stVerticalBlock"]:has(.sim-title) {
+        background-color: #ffffff;
+        border-radius: 20px;
+        padding: 30px 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        font-family: 'SUIT', sans-serif;
+        min-height: 310px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 0px !important;
+    }
+    .sim-title { font-size: 20px; font-weight: 800; color: #111; margin-bottom: 25px; }
+    .sim-header { font-size: 13px; font-weight: 600; color: #888; text-align: center; margin-bottom: 5px; margin-top:5px;}
+    .sim-value { font-size: 18px; font-weight: 500; color: #333; text-align:center;  line-height: 40px; }
+    button[kind="secondary"] {
+        background-color: white !important;
+        padding: 0px !important;
+        min-height: 0px !important;
+        height: 20px !important;
+        width: 100% !important;
+        border-radius: 4px !important;
+        font-size: 10px !important;
+        line-height: 1 !important;
+    }
+    div[data-testid*="stKey-s1"] button[kind="secondary"] {
+        color: #CDB5FF !important;
+        border: 1px solid #CDB5FF !important;
+    }
+    div[data-testid*="stKey-s1"] button[kind="secondary"]:hover {
+        background-color: #F3EFFF !important;
+    }
+    div[data-testid*="stKey-s2"] button[kind="secondary"] {
+        color: #89D8C0 !important;
+        border: 1px solid #89D8C0 !important;
+    }
+    div[data-testid*="stKey-s2"] button[kind="secondary"]:hover {
+        background-color: #E8F8F3 !important;
+    }
+    button[kind="primary"] {
+        background-color: #CDB5FF !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        height: 45px !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
+    button[kind="secondary"] {
+        background-color: #ffffff !important;
+        color: #CDB5FF !important;
+        border: none !important;
+        height: 18px !important;
+        font-weight: 700 !important;
+        width: 100% !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #B695FF !important;
+    }
+    div.stVerticalBlock {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap:0 20px !important;
+    }
+    div[data-testid="column"] > div > div[data-testid="stVerticalBlock"] { gap: 2px !important; }
+    .profile-icon { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
     </style>
-    <div class='sim-box'>
-        <div class='sim-title'>시뮬레이션</div>
-        <div class='sim-header'>
-            <div></div>
-            <div>인구변화율</div>
-            <div>예산배율</div>
-            <div>장애인화장실 비율</div>
-            <div>예측하기</div>
-        </div>
-        <!-- Row 1 -->
-        <div class='sim-row'>
-            <img src="data:image/png;base64,{sim_icon}" class="sim-icon">
-            <div class="sim-input-container">
-                <input id="sim1_pop" class="sim-input" value="110%"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
-            </div>
-            <div class="sim-input-container">
-                <input id="sim1_bud" class="sim-input" value="200%"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
-            </div>
-            <div class="sim-input-container">
-                <input id="sim1_acc" class="sim-input" value="30%이상"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon}"></button>
-            </div>
-            <button class="sim-btn" onclick="window.location.href='/?sim1=1&pop='+document.getElementById('sim1_pop').value+'&bud='+document.getElementById('sim1_bud').value+'&acc='+document.getElementById('sim1_acc').value">Simulation</button>
-        </div>
-        <!-- Row 2 -->
-        <div class='sim-row'>
-            <img src="data:image/png;base64,{sim_icon}" class="sim-icon">
-            <div class="sim-input-container">
-                <input id="sim2_pop" class="sim-input" value="90%"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
-            </div>
-            <div class="sim-input-container">
-                <input id="sim2_bud" class="sim-input" value="50%"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
-            </div>
-            <div class="sim-input-container">
-                <input id="sim2_acc" class="sim-input" value="10%이상"/>
-                <button class="arrow-btn"><img src="data:image/svg+xml;base64,{arrow_down_icon2}"></button>
-            </div>
-            <button class="sim-btn" onclick="window.location.href='/?sim2=1&pop='+document.getElementById('sim2_pop').value+'&bud='+document.getElementById('sim2_bud').value+'&acc='+document.getElementById('sim2_acc').value">Simulation</button>
-        </div>
-    </div>
-    """
-    st.markdown(sim_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    defaults = {
+        "sim1_pop": 110, "sim1_bud": 200, "sim1_acc": 30,
+        "sim2_pop": 90,  "sim2_bud": 50,  "sim2_acc": 10
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+    st.markdown('<div class="sim-title">시뮬레이션</div>', unsafe_allow_html=True)
+    
+    h0, h1, h2, h3, h4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.6])
+    with h1: st.markdown("<div class='sim-header'>인구변화율</div>", unsafe_allow_html=True)
+    with h2: st.markdown("<div class='sim-header'>예산배율</div>", unsafe_allow_html=True)
+    with h3: st.markdown("<div class='sim-header'>장애인화장실 비율</div>", unsafe_allow_html=True)
+    with h4: st.markdown("<div class='sim-header'>예측하기</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+
+    r1_c0, r1_c1, r1_c2, r1_c3, r1_c4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.2])
+
+    with r1_c0:
+        st.markdown(f"""<div style="display:flex; justify-content:center; align-items:center; height:42px;">
+            <img src="data:image/png;base64,{sim_icon}" class="profile-icon"></div>""", unsafe_allow_html=True)
+
+    with r1_c1:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_pop']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_p_up", type="secondary"): st.session_state["sim1_pop"] += 10; st.rerun()
+            if st.button("▼", key="s1_p_dw", type="secondary"): st.session_state["sim1_pop"] -= 10; st.rerun()
+
+    with r1_c2:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_bud']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_b_up", type="secondary"): st.session_state["sim1_bud"] += 10; st.rerun()
+            if st.button("▼", key="s1_b_dw", type="secondary"): st.session_state["sim1_bud"] -= 10; st.rerun()
+
+    with r1_c3:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim1_acc']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s1_a_up", type="secondary"): st.session_state["sim1_acc"] += 5; st.rerun()
+            if st.button("▼", key="s1_a_dw", type="secondary"): st.session_state["sim1_acc"] -= 5; st.rerun()
+
+    with r1_c4:
+        if st.button("Simulation", key="run_s1", type="primary"):
+            st.session_state.df = run_prediction(st.session_state['sim1_pop']/100, st.session_state['sim1_bud']/100, st.session_state['sim1_acc']/100)
+            st.rerun()
+
+    st.markdown("<div style='margin: 15px 0px; border-top: 1px solid #F0F0F0;padding-bottom:15px;'></div>", unsafe_allow_html=True)
+
+    r2_c0, r2_c1, r2_c2, r2_c3, r2_c4 = st.columns([0.6, 1.2, 1.2, 1.2, 1.2])
+
+    with r2_c0:
+        st.markdown(f"""<div style="display:flex; justify-content:center; align-items:center; height:42px;">
+            <img src="data:image/png;base64,{sim_icon}" class="profile-icon" style="opacity:1;"></div>""", unsafe_allow_html=True)
+
+    with r2_c1:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_pop']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_p_up", type="secondary"): st.session_state["sim2_pop"] += 10; st.rerun()
+            if st.button("▼", key="s2_p_dw", type="secondary"): st.session_state["sim2_pop"] -= 10; st.rerun()
+
+    with r2_c2:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_bud']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_b_up", type="secondary"): st.session_state["sim2_bud"] += 10; st.rerun()
+            if st.button("▼", key="s2_b_dw", type="secondary"): st.session_state["sim2_bud"] -= 10; st.rerun()
+
+    with r2_c3:
+        c_val, c_btn = st.columns([2, 1])
+        with c_val: st.markdown(f"<div class='sim-value'>{st.session_state['sim2_acc']}%</div>", unsafe_allow_html=True)
+        with c_btn:
+            if st.button("▲", key="s2_a_up", type="secondary"): st.session_state["sim2_acc"] += 5; st.rerun()
+            if st.button("▼", key="s2_a_dw", type="secondary"): st.session_state["sim2_acc"] -= 5; st.rerun()
+
+    with r2_c4:
+        if st.button("  Simulation  ", key="run_s2", type="primary"):
+            st.session_state.df = run_prediction(st.session_state['sim2_pop']/100, st.session_state['sim2_bud']/100, st.session_state['sim2_acc']/100)
+            st.rerun()
+
+    st.markdown("""
+    <script>
+    const btns = window.parent.document.querySelectorAll('button[kind="primary"]');
+    if (btns.length > 1) {
+        btns[1].style.backgroundColor = "#89D8C0";
+        btns[1].addEventListener('mouseover', function() { this.style.backgroundColor = "#7AC4AD"; });
+        btns[1].addEventListener('mouseout', function() { this.style.backgroundColor = "#89D8C0"; });
+    }
+    </script>
+    """, unsafe_allow_html=True)
 
 with col4:
     html_model = f"""
