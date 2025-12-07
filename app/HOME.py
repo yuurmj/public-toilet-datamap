@@ -50,12 +50,28 @@ st.markdown("""
 @import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Regular.woff2');
 @import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Bold.woff2');
 
-body, [class*="css"] {
-    font-family: 'SUIT', sans-serif !important;
-    background-color: #f8f9fc !important;
+[data-testid="stToolbar"] {
+    display: none !important;
+    color:#FAFAFB; !important;
+}
+header[data-testid="stHeader"] {
+    background-color: #FAFAFB !important;
 }
 
-.kpi-card { margin-top:26px; background: #ffffff; padding: 22px; border-radius: 18px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border: 1px solid #f1f3f7; }
+/* 헤더 안쪽 shadow / border 제거 */
+header[data-testid="stHeader"]::before {
+    background-color: #FAFAFB !important;
+    box-shadow: none !important;
+}
+body, [class*="css"] {
+    font-family: 'SUIT', sans-serif !important;
+    background-color: #FAFAFB !important;
+}
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stSidebar"] {
+    background-color: #FAFAFB !important;
+}
+
+.kpi-card {margin-top:26px; background: #ffffff; padding: 22px; border-radius: 18px; box-shadow: 0 3px 10px rgba(0,0,0,0.04); border: 1px solid #f1f3f7; }
 .kpi-value { font-weight: 800; font-size: 22px; }
 .kpi-label { font-weight: 500; color: #6c6b7b; font-size: 13px; }
 
@@ -230,7 +246,6 @@ with left:
     # 만약 5개보다 적으면 → 가장 가까운 5개 가져오기
     if len(near) < 5:
         near = df_toilet.nsmallest(5, "distance")
-
 
     # ----------------------------
     # 5) 지도 생성
