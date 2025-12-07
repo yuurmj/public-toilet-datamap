@@ -151,18 +151,49 @@ with c2:
             <span style="font-weight:700; font-size:25px;">기술 스택</span>
           </div>
 
-          <div class="card-body">
-            <ul style="margin:0 0 0 1.1rem;">
-              <li>PYTHON</li>
-              <li>GIT HUB</li>
-              <li>FIGMA</li>
-              <li>NOTION</li>
-            </ul>
+          <!-- 아이콘 + 카테고리 -->
+          <div style="display:flex; justify-content:space-between; text-align:center; margin-top:12px;">
+              <div style="flex:1;">
+                <div style="font-size:17px; font-weight:600; color:#5a5a5a; margin-bottom:25px;">Programming</div>
+                <img src="https://img.icons8.com/?size=100&id=101379&format=png&color=8FDAC8"
+                     style="width:32px;" />
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:17px; font-weight:600; color:#5a5a5a; margin-bottom:25px;">Collaboration</div>
+                <img src="https://img.icons8.com/?size=100&id=62856&format=png&color=8FDAC8"
+                     style="width:32px;" />
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:17px; font-weight:600; color:#5a5a5a; margin-bottom:25px;">Design</div>
+                <img src="https://img.icons8.com/?size=100&id=59822&format=png&color=8FDAC8"
+                     style="width:32px;" />
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:17px; font-weight:600; color:#5a5a5a; margin-bottom:25px;">Docs / PM</div>
+                <img src="https://img.icons8.com/?size=100&id=23265&format=png&color=8FDAC8"
+                     style="width:32px;" />
+              </div>
+          </div>
+          <!-- 기술 항목 -->
+          <div style="
+                display:flex; 
+                justify-content:space-between; 
+                text-align:center;
+                margin-top:8px;
+                font-size:22px;
+                font-weight:700;
+                color:#333;">
+              <div style="flex:1;">PYTHON</div>
+              <div style="flex:1;">GITHUB</div>
+              <div style="flex:1;">FIGMA</div>
+              <div style="flex:1;">NOTION</div>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
 
 
 c3, c4 = st.columns(2)
