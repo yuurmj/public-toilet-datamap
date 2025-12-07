@@ -183,3 +183,221 @@ with table:
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+
+
+
+# import streamlit as st
+# from datetime import date
+
+# # -------------------------------
+# # 페이지 설정
+# # -------------------------------
+# st.set_page_config(page_title="설정", layout="wide")
+
+
+# # -------------------------------
+# # 초기 상태값 설정
+# # -------------------------------
+# DEFAULT_SETTINGS = {
+#     "show_accessible_toilets": True,
+#     "auto_detect_location": False,
+#     "default_map_center": "남구 대연동",
+#     "last_data_update": date(2025, 11, 17),
+#     "language": "ko",
+# }
+
+# for key, value in DEFAULT_SETTINGS.items():
+#     if key not in st.session_state:
+#         st.session_state[key] = value
+
+
+# # -------------------------------
+# # CSS
+# # -------------------------------
+# st.markdown("""
+# <style>
+# body, html, [data-testid="stAppViewContainer"] {
+#     background-color: #FAFAFB !important;
+# }
+
+# /* 제목 스타일 */
+# .section-title {
+#     font-size: 32px;
+#     font-weight: 700;
+#     margin-bottom: 2px;
+#     color: #2B2D33;
+# }
+# .section-subtitle {
+#     font-size: 17px;
+#     color: #707070;
+#     margin-bottom: 28px;
+# }
+
+# /* 테이블 헤더 */
+# .table-header {
+#     font-size: 20px;
+#     font-weight: 600;
+#     color: #36383F;
+# }
+# .table-line {
+#     border-bottom: 1px solid #E5E5E5;
+#     margin-top: 6px;
+#     margin-bottom: 22px;
+# }
+
+# /* 카드 스타일 */
+# .setting-card {
+#     background: #FFFFFF;
+#     padding: 24px 28px;
+#     border-radius: 22px;
+#     box-shadow: 0px 8px 20px rgba(0,0,0,0.06);
+#     margin-bottom: 22px;
+# }
+# </style>
+# """, unsafe_allow_html=True)
+
+
+# # -------------------------------
+# # 제목
+# # -------------------------------
+# st.markdown('<div class="section-title">지도 기능과 위치 기반 서비스를 개인 설정에 맞게 관리하세요</div>', unsafe_allow_html=True)
+# st.markdown('<div class="section-subtitle">지도 페이지에서도 설정할 수 있습니다</div>', unsafe_allow_html=True)
+
+
+# # -------------------------------
+# # 표 헤더
+# # -------------------------------
+# h1, h2, h3 = st.columns([2.5, 3, 1])
+# with h1:
+#     st.markdown('<div class="table-header">Name</div>', unsafe_allow_html=True)
+# with h2:
+#     st.markdown('<div class="table-header">Description</div>', unsafe_allow_html=True)
+# with h3:
+#     st.markdown('<div class="table-header">Setting</div>', unsafe_allow_html=True)
+
+# st.markdown('<div class="table-line"></div>', unsafe_allow_html=True)
+
+
+# # ============================================================
+# #                카드 1: 장애인 화장실 표시 여부             
+# # ============================================================
+# with st.container():
+#     st.markdown('<div class="setting-card">', unsafe_allow_html=True)
+#     col1, col2, col3 = st.columns([2.5, 3, 1])
+
+#     with col1:
+#         st.markdown("**계정 설정**")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Account Settings</span>',
+#                     unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown("장애인 화장실 표시 여부")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Show accessible toilets</span>',
+#                     unsafe_allow_html=True)
+
+#     with col3:
+#         st.session_state.show_accessible_toilets = st.toggle(
+#             "",
+#             value=st.session_state.show_accessible_toilets,
+#         )
+#     st.markdown("</div>", unsafe_allow_html=True)
+
+
+# # ============================================================
+# #                카드 2: 현재 위치 자동 감지                   
+# # ============================================================
+# with st.container():
+#     st.markdown('<div class="setting-card">', unsafe_allow_html=True)
+#     col1, col2, col3 = st.columns([2.5, 3, 1])
+
+#     with col1:
+#         st.markdown("**지도/위치 설정**")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Map & Location</span>',
+#                     unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown("현재 위치 자동 감지 여부")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Auto-detect Current Location</span>',
+#                     unsafe_allow_html=True)
+
+#     with col3:
+#         st.session_state.auto_detect_location = st.toggle(
+#             "",
+#             value=st.session_state.auto_detect_location,
+#         )
+#     st.markdown("</div>", unsafe_allow_html=True)
+
+
+# # ============================================================
+# #                카드 3: 기본 지도 위치                       
+# # ============================================================
+# with st.container():
+#     st.markdown('<div class="setting-card">', unsafe_allow_html=True)
+#     col1, col2, col3 = st.columns([2.5, 3, 1])
+
+#     with col1:
+#         st.markdown("**지도/위치 설정**")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Map & Location</span>',
+#                     unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown("기본 지도 위치")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Default Map Center</span>',
+#                     unsafe_allow_html=True)
+
+#     with col3:
+#         st.markdown(
+#             f'<div style="padding:8px 20px; border-radius:999px; background:#E7E1FF; text-align:center; font-size:15px;">{st.session_state.default_map_center}</div>',
+#             unsafe_allow_html=True
+#         )
+#     st.markdown("</div>", unsafe_allow_html=True)
+
+
+# # ============================================================
+# #                카드 4: 데이터 최신 업데이트일               
+# # ============================================================
+# with st.container():
+#     st.markdown('<div class="setting-card">', unsafe_allow_html=True)
+#     col1, col2, col3 = st.columns([2.5, 3, 1])
+
+#     with col1:
+#         st.markdown("**데이터 설정**")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Data</span>',
+#                     unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown("데이터 최신 업데이트일 확인")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Last Data Update</span>',
+#                     unsafe_allow_html=True)
+
+#     with col3:
+#         st.markdown(
+#             f'<div style="padding:8px 20px; border-radius:999px; background:#D6F3E7; text-align:center; font-size:15px;">2025.11.17</div>',
+#             unsafe_allow_html=True
+#         )
+#     st.markdown("</div>", unsafe_allow_html=True)
+
+
+# # ============================================================
+# #                카드 5: 언어 설정                            
+# # ============================================================
+# with st.container():
+#     st.markdown('<div class="setting-card">', unsafe_allow_html=True)
+#     col1, col2, col3 = st.columns([2.5, 3, 1])
+
+#     with col1:
+#         st.markdown("**언어 설정**")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Language</span>',
+#                     unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown("언어 설정 (한국어)")
+#         st.markdown('<span style="color:#909090; font-size:13px;">Language (Korean)</span>',
+#                     unsafe_allow_html=True)
+
+#     with col3:
+#         st.markdown(
+#             f'<div style="padding:8px 20px; border-radius:999px; background:#E7E1FF; text-align:center; font-size:15px;">한국어</div>',
+#             unsafe_allow_html=True
+#         )
+#     st.markdown("</div>", unsafe_allow_html=True)
