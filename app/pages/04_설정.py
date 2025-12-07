@@ -5,6 +5,32 @@ from textwrap import dedent
 # 페이지 기본 설정
 st.set_page_config(page_title="설정", layout="wide")
 
+# Streamlit 기본 헤더/메뉴/푸터 제거
+st.markdown("""
+<style>
+/* 메인 컨테이너의 기본 padding 제거 */  /* 추가 */
+.block-container {
+    padding-top: 0rem !important;
+}
+            
+/* 상단 헤더 숨기기 */
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+
+/* 상단 메뉴 바 숨기기 */
+#MainMenu {
+    display: none !important;
+}
+
+/* 푸터 숨기기 */
+footer {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 st.markdown("""
 <style>
 h6 {
