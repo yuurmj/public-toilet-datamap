@@ -54,14 +54,16 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer
 /* 팀 소개 내부 레이아웃 */
 .team-layout {
     margin-top:7px;           /* 제목과 내용 사이 간격 */
+    font-weight:700;
+    font-size:22px;
 }
 
 /* 오른쪽 이름 리스트 */
 .team-layout ul {
     margin:0;
     padding-left:0.2rem;
-    font-size:25px;
-    line-height:2.6;
+    font-size:16px;
+    line-height:2.65;
 }
 </style>
 """,
@@ -73,7 +75,7 @@ TEAM_CARD_HTML = dedent("""
   <div class="card-title-center" style="display:flex; align-items:center; gap:8px;">
     <img src="https://img.icons8.com/?size=100&id=52966&format=png&color=000000"
          style="width:26px; height:26px;" />
-    <span style="font-weight:800; font-size:25px;">팀 소개</span>
+    <span style="font-weight:700; font-size:25px;">팀 소개</span>
   </div>
 
   <div class="team-layout"
