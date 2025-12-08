@@ -21,8 +21,18 @@ div.stVerticalBlock.st-emotion-cache-tn0cau.e196pkbe2 {
     padding: 0 !important;
     margin: 0 !important;
 }
-
-
+div.stMainBlockContainer.block-container.st-emotion-cache-zy6yx3.e4man114{
+    padding-top: 30px !important;
+}
+/* h3 밑 여백 줄이기 */
+.st-emotion-cache-3uj0rx h3 {
+  padding-bottom: 0.1rem; /* 기존 1rem → 0.25rem */
+  margin-bottom: 0;        /* 혹시 margin이 생길 경우 제거 */
+}
+}
+#b543a7a3 {
+  color: #2c2c2c; /* 진한 회색 */
+}
 /* 1,2,3번 줄: marker를 가진 VerticalBlock 전체를 카드처럼 */
 div[data-testid="stVerticalBlock"]:has(#setting-row-1),
 div[data-testid="stVerticalBlock"]:has(#setting-row-2),
@@ -70,7 +80,9 @@ div[data-testid="stToggle"]:nth-of-type(2) div[role="switch"][aria-checked="true
     box-shadow: 0 10px 30px rgba(23, 34, 59, 0.06);
 }
 
-
+[data-testid="stAppViewContainer"] > .main > section {
+    padding-top: 30px !important;    /* 원하는 만큼 조절 (기본 약 60px) */
+}
 </style>""", unsafe_allow_html=True)
 
 
