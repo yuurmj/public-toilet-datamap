@@ -39,6 +39,20 @@ with col1:
 
         html = f"""
         <style>
+        [data-testid="stToolbar"] {{
+            display: none !important;
+            color:#FAFAFB; !important;
+        }}
+        header[data-testid="stHeader"] {{
+            background-color: #FAFAFB !important;
+        }}
+        header[data-testid="stHeader"]::before {{
+            background-color: #FAFAFB !important;
+            box-shadow: none !important;
+        }}
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stSidebar"] {{
+            background-color: #FAFAFB !important;
+        }}
         div.stMainBlockContainer {{
             width: 100% !important;
             max-width: 100% !important;
