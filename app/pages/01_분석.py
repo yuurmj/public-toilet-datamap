@@ -83,7 +83,7 @@ def _standardize_toilets(df: pd.DataFrame | None) -> pd.DataFrame | None:
     return df
 
 # =========================
-# 데이터 로드(앱 데이터 -> 베이스라인 병합)
+# 데이터 로드
 # =========================
 @st.cache_data
 def load_dataset():
@@ -102,8 +102,7 @@ def load_dataset():
         if c in pop_app.columns:
             pop_app[c] = pd.to_numeric(pop_app[c], errors="coerce")
 
-
-    # 다른 구가 없으면 베이스라인(목) 병합
+    # 다른 구가 없으면 베이스라인 병합
     curr_districts = set(str(d) for d in pop_app["district"].dropna().unique())
     if len(curr_districts) <= 1:
         base_toilets = _read_csv_safe(["data/baseline_toilets_mock.csv"])
@@ -167,74 +166,58 @@ with right_box:
     st.markdown('</div></div>', unsafe_allow_html=True)
 
 # =========================
-# 포맷/증감 유틸
+# 포맷/증감 유틸 (심볼만 색상 적용)
 # =========================
 def fmt_int(x): return f"{int(x):,}" if pd.notna(x) else "N/A"
 def fmt_pct(x): return f"{x*100:.1f}%" if pd.notna(x) else "N/A"
 
 def delta_pp(sel, oth, thresh=2.0):
-    if not (pd.notna(sel) and pd.notna(oth)):
-        return "비교 불가"
+    if not (pd.notna(sel) and pd.notna(oth)): return "비교 불가"
     diff_pp = (sel - oth) * 100.0
-    if abs(diff_pp) < thresh:
-        return "⎯ 평균 수준 유지"
-    return f"평균 대비 {'▲' if diff_pp>0 else '▼'} {abs(diff_pp):.1f}%p"
+    if abs(diff_pp) < thresh: return "⎯ 평균 수준 유지"
+    
+    # [수정] 기호(▲/▼)에만 색상을 적용, 숫자는 span 밖으로 뺌
+    symbol = '▲' if diff_pp > 0 else '▼'
+    color = '#BFA9F2' if diff_pp > 0 else '#8FDAC8'
+    return f'평균 대비 <span style="color:{color}">{symbol}</span> {abs(diff_pp):.1f}%p'
 
 def delta_pct(sel, oth, thresh=2.0):
-    if not (pd.notna(sel) and pd.notna(oth)) or oth == 0:
-        return "비교 불가"
+    if not (pd.notna(sel) and pd.notna(oth)) or oth == 0: return "비교 불가"
     diff = (sel - oth) / oth * 100.0
-    if abs(diff) < thresh:
-        return "⎯ 평균 수준 유지"
-    return f"평균 대비 {'▲' if diff>0 else '▼'} {abs(diff):.1f}%"
+    if abs(diff) < thresh: return "⎯ 평균 수준 유지"
+    
+    # [수정] 기호(▲/▼)에만 색상을 적용, 숫자는 span 밖으로 뺌
+    symbol = '▲' if diff > 0 else '▼'
+    color = '#BFA9F2' if diff > 0 else '#8FDAC8'
+    return f'평균 대비 <span style="color:{color}">{symbol}</span> {abs(diff):.1f}%'
 
-def bowls_avg_for_district(toi_df: pd.DataFrame, district: str):
+def bowls_avg_for_district(toi_df, district):
     df = toi_df[toi_df["district"] == district]
-    if df.empty or not {"male_wc","female_wc"}.issubset(df.columns):
-        return np.nan
-    bowls = (pd.to_numeric(df["male_wc"], errors="coerce").fillna(0)
-             + pd.to_numeric(df["female_wc"], errors="coerce").fillna(0)).replace(0, np.nan)
+    if df.empty or not {"male_wc","female_wc"}.issubset(df.columns): return np.nan
+    bowls = (pd.to_numeric(df["male_wc"], errors="coerce").fillna(0) + pd.to_numeric(df["female_wc"], errors="coerce").fillna(0)).replace(0, np.nan)
     return bowls.mean()
 
-def district_metrics(agg_df: pd.DataFrame, district: str):
+def district_metrics(agg_df, district):
     sub = agg_df[agg_df["district"] == district]
     t = int(sub["toilets_count"].sum())
     acc = int(sub["accessible_count"].sum())
     pop = int(sub["population"].sum())
-    acc_ratio = (acc / t) if t > 0 else np.nan
-    per_1k = (t / pop * 1000.0) if pop > 0 else np.nan
-    one_over_N = (pop / t) if t > 0 else np.nan
-    return {"toilets": t, "acc_ratio": acc_ratio, "per_1k": per_1k, "one_over_N": one_over_N}
+    return {"toilets": t, "acc_ratio": (acc/t) if t>0 else np.nan, "per_1k": (t/pop*1000.0) if pop>0 else np.nan, "one_over_N": (pop/t) if t>0 else np.nan}
 
-def others_average(agg_df: pd.DataFrame, toi_df: pd.DataFrame | None, selected: str):
+def others_average(agg_df, toi_df, selected):
     others = agg_df[agg_df["district"] != selected]
-    if others.empty:
-        return {"toilets": np.nan, "acc_ratio": np.nan, "per_1k": np.nan, "bowls_avg": np.nan}
-    grp = others.groupby("district", as_index=False).agg(
-        t=("toilets_count","sum"),
-        acc=("accessible_count","sum"),
-        pop=("population","sum"),
-    )
+    if others.empty: return {"toilets":np.nan,"acc_ratio":np.nan,"per_1k":np.nan,"bowls_avg":np.nan}
+    grp = others.groupby("district", as_index=False).agg(t=("toilets_count","sum"), acc=("accessible_count","sum"), pop=("population","sum"))
     grp["acc_ratio"] = np.where(grp["t"]>0, grp["acc"]/grp["t"], np.nan)
     grp["per_1k"] = np.where(grp["pop"]>0, grp["t"]/grp["pop"]*1000.0, np.nan)
-
+    
+    bowls_avg_others = np.nan
     if toi_df is not None and not toi_df.empty and {"district","male_wc","female_wc"}.issubset(toi_df.columns):
-        bowls_by_gu = toi_df.assign(
-            male_wc=pd.to_numeric(toi_df["male_wc"], errors="coerce").fillna(0),
-            female_wc=pd.to_numeric(toi_df["female_wc"], errors="coerce").fillna(0),
-        )
-        bowls_by_gu["bowls"] = (bowls_by_gu["male_wc"] + bowls_by_gu["female_wc"]).replace(0, np.nan)
-        bowls_by_gu = bowls_by_gu.groupby("district")["bowls"].mean()
-        bowls_avg_others = bowls_by_gu.reindex(grp["district"]).mean(skipna=True)
-    else:
-        bowls_avg_others = np.nan
-
-    return {
-        "toilets": grp["t"].mean(skipna=True),
-        "acc_ratio": grp["acc_ratio"].mean(skipna=True),
-        "per_1k": grp["per_1k"].mean(skipna=True),
-        "bowls_avg": bowls_avg_others,
-    }
+        b = toi_df.assign(male_wc=pd.to_numeric(toi_df["male_wc"],errors="coerce").fillna(0), female_wc=pd.to_numeric(toi_df["female_wc"],errors="coerce").fillna(0))
+        b["bowls"] = (b["male_wc"]+b["female_wc"]).replace(0,np.nan)
+        bowls_avg_others = b.groupby("district")["bowls"].mean().reindex(grp["district"]).mean(skipna=True)
+        
+    return {"toilets":grp["t"].mean(), "acc_ratio":grp["acc_ratio"].mean(), "per_1k":grp["per_1k"].mean(), "bowls_avg":bowls_avg_others}
 
 # =========================
 # 상단 요약 카드
@@ -245,98 +228,37 @@ if selected_gu == "전체":
     cols = st.columns(4 if HAS_BOWLS else 3)
     with cols[0]:
         total = int(agg["toilets_count"].sum())
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">총 화장실 수</div>
-  <div class="metric-value">{fmt_int(total)}</div>
-  <div class="metric-sub">비교 불가</div>
-</div>
-""", unsafe_allow_html=True)
+        st.markdown(f'<div class="analytics-card"><div class="metric-label">총 화장실 수</div><div class="metric-value">{fmt_int(total)}</div><div class="metric-sub">비교 불가</div></div>', unsafe_allow_html=True)
     with cols[1]:
-        acc_total = int(agg["accessible_count"].sum())
-        t_total = int(agg["toilets_count"].sum())
-        acc_ratio_all = (t_total and (acc_total / t_total)) or np.nan
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">장애인 화장실 비율</div>
-  <div class="metric-value">{fmt_pct(acc_ratio_all)}</div>
-  <div class="metric-sub">비교 불가</div>
-</div>
-""", unsafe_allow_html=True)
+        acc = int(agg["accessible_count"].sum())
+        tot = int(agg["toilets_count"].sum())
+        st.markdown(f'<div class="analytics-card"><div class="metric-label">장애인 화장실 비율</div><div class="metric-value">{fmt_pct(acc/tot if tot>0 else 0)}</div><div class="metric-sub">비교 불가</div></div>', unsafe_allow_html=True)
     if HAS_BOWLS:
         with cols[2]:
-            bowls_text = f"{bowls_avg_all:.1f}" if pd.notna(bowls_avg_all) else "N/A"
-            st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">화장실 당 평균 변기 수</div>
-  <div class="metric-value">{bowls_text}</div>
-  <div class="metric-sub">비교 불가</div>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown(f'<div class="analytics-card"><div class="metric-label">화장실 당 평균 변기 수</div><div class="metric-value">{bowls_avg_all:.1f}</div><div class="metric-sub">비교 불가</div></div>', unsafe_allow_html=True)
         idx_last = 3
     else:
         idx_last = 2
     with cols[idx_last]:
-        pop_sum = int(agg["population"].sum())
-        t_sum = int(agg["toilets_count"].sum())
-        n_txt = f"1 / {int(pop_sum / t_sum):,}" if t_sum > 0 else "N/A"
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">인구 대비 화장실</div>
-  <div class="metric-value">{n_txt}</div>
-  <div class="metric-sub">비교 불가</div>
-</div>
-""", unsafe_allow_html=True)
+        pop = int(agg["population"].sum())
+        tot = int(agg["toilets_count"].sum())
+        st.markdown(f'<div class="analytics-card"><div class="metric-label">인구 대비 화장실</div><div class="metric-value">{f"1 / {int(pop/tot):,}" if tot>0 else "N/A"}</div><div class="metric-sub">비교 불가</div></div>', unsafe_allow_html=True)
 
 else:
     sel = district_metrics(agg, selected_gu)
     oth = others_average(agg, toilets_app if HAS_BOWLS else None, selected_gu)
-    if HAS_BOWLS:
-        c1, c2, c3, c4 = st.columns(4)
-    else:
-        c1, c2, c4 = st.columns(3)
+    if HAS_BOWLS: c1,c2,c3,c4 = st.columns(4)
+    else: c1,c2,c4 = st.columns(3)
 
-    with c1:
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">총 화장실 수</div>
-  <div class="metric-value">{fmt_int(sel["toilets"])}</div>
-  <div class="metric-sub">{delta_pct(sel["toilets"], oth["toilets"])}</div>
-</div>
-""", unsafe_allow_html=True)
-
-    with c2:
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">장애인 화장실 비율</div>
-  <div class="metric-value">{fmt_pct(sel["acc_ratio"])}</div>
-  <div class="metric-sub">{delta_pp(sel["acc_ratio"], oth["acc_ratio"])}</div>
-</div>
-""", unsafe_allow_html=True)
-
+    with c1: st.markdown(f'<div class="analytics-card"><div class="metric-label">총 화장실 수</div><div class="metric-value">{fmt_int(sel["toilets"])}</div><div class="metric-sub">{delta_pct(sel["toilets"], oth["toilets"])}</div></div>', unsafe_allow_html=True)
+    with c2: st.markdown(f'<div class="analytics-card"><div class="metric-label">장애인 화장실 비율</div><div class="metric-value">{fmt_pct(sel["acc_ratio"])}</div><div class="metric-sub">{delta_pp(sel["acc_ratio"], oth["acc_ratio"])}</div></div>', unsafe_allow_html=True)
     if HAS_BOWLS:
         with c3:
-            bowls_sel = bowls_avg_for_district(toilets_app, selected_gu)
-            bowls_oth = oth["bowls_avg"]
-            bowls_text = f"{bowls_sel:.1f}" if pd.notna(bowls_sel) else "N/A"
-            sub_txt = delta_pct(bowls_sel, bowls_oth) if pd.notna(bowls_sel) and pd.notna(bowls_oth) else "비교 불가"
-            st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">화장실 당 평균 변기 수</div>
-  <div class="metric-value">{bowls_text}</div>
-  <div class="metric-sub">{sub_txt}</div>
-</div>
-""", unsafe_allow_html=True)
-
+             b_sel = bowls_avg_for_district(toilets_app, selected_gu)
+             b_oth = oth["bowls_avg"]
+             st.markdown(f'<div class="analytics-card"><div class="metric-label">화장실 당 평균 변기 수</div><div class="metric-value">{b_sel:.1f}</div><div class="metric-sub">{delta_pct(b_sel, b_oth) if pd.notna(b_sel) and pd.notna(b_oth) else "비교 불가"}</div></div>', unsafe_allow_html=True)
     with (c4 if HAS_BOWLS else c4):
-        n_txt = f"1 / {int(sel['one_over_N']):,}" if pd.notna(sel["one_over_N"]) else "N/A"
-        st.markdown(f"""
-<div class="analytics-card">
-  <div class="metric-label">인구 대비 화장실</div>
-  <div class="metric-value">{n_txt}</div>
-  <div class="metric-sub">{delta_pct(sel["per_1k"], oth["per_1k"])}</div>
-</div>
-""", unsafe_allow_html=True)
+        st.markdown(f'<div class="analytics-card"><div class="metric-label">인구 대비 화장실</div><div class="metric-value">{f"1 / {int(sel["one_over_N"]):,}" if pd.notna(sel["one_over_N"]) else "N/A"}</div><div class="metric-sub">{delta_pct(sel["per_1k"], oth["per_1k"])}</div></div>', unsafe_allow_html=True)
 
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
@@ -355,7 +277,7 @@ def chart_card(title: str, fig, subtitle: str | None = None, height: int = 250):
 body {{ margin:0; padding:0; background:transparent; font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif; }}
 .chart-card {{ background:#FFFFFF; border-radius:24px; padding:20px 24px 18px; height:{card_internal_height}px; box-sizing:border-box; }}
 .chart-title {{ font-size:18px; font-weight:700; margin-bottom:10px; color:#222222; padding-left:{indent_px}px; }}
-.chart-subtitle {{ font-size:11px; color:#9FA8BA; padding-left:{indent_px}px; }}
+.chart-subtitle {{ font-size:13px; color:#9FA8BA; margin-bottom:8px; padding-left:{indent_px}px; }}
 .js-plotly-plot .plotly .main-svg {{ background-color: rgba(0,0,0,0) !important; overflow: visible !important; }}
 .infolayer .g-gdata .g-t .text {{ fill: #222222 !important; }}
 .rect.nsewdrag.drag {{ pointer-events:none !important; opacity:0 !important; }}
@@ -363,14 +285,13 @@ body {{ margin:0; padding:0; background:transparent; font-family:-apple-system,B
 <body><div class="chart-card"><div class="chart-title">{title}</div>{sub}{fig_html}</div></body></html>
 """
     components.html(html, height=card_internal_height, scrolling=False)
+
 def ratio_card(df, height: int = 250, cols: int = 3):
-    # 분위 기준 계산
     df_calc = df.dropna(subset=['toilets_per_1k']).copy()
     if not df_calc.empty:
         low_q = df_calc['toilets_per_1k'].quantile(0.33)
         high_q = df_calc['toilets_per_1k'].quantile(0.66)
-    else:
-        low_q, high_q = 0, 0
+    else: low_q, high_q = 0, 0
 
     def classify(x):
         if pd.isna(x): return '평균'
@@ -383,7 +304,6 @@ def ratio_card(df, height: int = 250, cols: int = 3):
     colors = {"부족":"#D6F3E7","충분":"#E7E1FF","평균":"#EEEEEE"}
     df['color'] = df['type'].map(colors)
 
-    # 6개만 표시
     target_dongs = sorted(df["dong"].unique().tolist())[:6]
     card_data = []
     for dong in target_dongs:
@@ -395,17 +315,13 @@ def ratio_card(df, height: int = 250, cols: int = 3):
         else:
             card_data.append({"dong": dong, "value": "N/A", "color": "#EEEEEE"})
 
-    html_cards = "".join([
-        f"""<div class="pill" style="background:{it['color']};">
-               <span class="pill-label">{it['dong']}</span>
-               <span class="pill-value">{it['value']}</span>
-            </div>"""
-        for it in card_data
-    ])
+    html_cards = "".join([f'<div class="pill" style="background:{it["color"]};"><span class="pill-label">{it["dong"]}</span><span class="pill-value">{it["value"]}</span></div>' for it in card_data])
 
     card_internal_height = height + 50
     grid_max_px = 250 
-    indent_px = 12
+    
+    # [유지] 제목/부제목 위치 조정 값
+    indent_px = 4
 
     html = f"""
 <html><head><meta charset="utf-8" />
@@ -441,7 +357,7 @@ body {{ margin:0; padding:0; background:transparent; font-family:-apple-system,B
     components.html(html, height=card_internal_height, scrolling=False)
 
 # =========================
-# 중단 3개 카드 (선택 구 기준)
+# 중단 3개 카드
 # =========================
 if selected_gu == "전체":
     base_gu = "남구" if "남구" in agg["district"].unique() else agg["district"].iloc[0]
@@ -457,11 +373,12 @@ with colA:
         y="dong", x="toilets_count", orientation="h",
         text="toilets_count"
     )
+    # [유지] yaxis ticksuffix 공백 추가
     fig1.update_layout(
         xaxis_title="", yaxis_title="", template="plotly_white", height=250,
         margin=dict(l=40, r=40, t=0, b=20),
         xaxis=dict(visible=False, showgrid=False, fixedrange=True),
-        yaxis=dict(tickfont=dict(size=12), fixedrange=True),
+        yaxis=dict(tickfont=dict(size=12), fixedrange=True, ticksuffix="   "),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         showlegend=False, bargap=0.6, dragmode=False
     )
@@ -474,11 +391,12 @@ with colB:
         y="dong", x="accessible_ratio", orientation="h",
         text="accessible_ratio"
     )
+    # [유지] yaxis ticksuffix 공백 추가
     fig2.update_layout(
         xaxis_title="", yaxis_title="", template="plotly_white", height=250,
         margin=dict(l=40, r=40, t=0, b=20),
         xaxis=dict(visible=False, showgrid=False, fixedrange=True),
-        yaxis=dict(tickfont=dict(size=12), fixedrange=True),
+        yaxis=dict(tickfont=dict(size=12), fixedrange=True, ticksuffix="   "),
         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
         showlegend=False, bargap=0.6, dragmode=False
     )
@@ -486,32 +404,17 @@ with colB:
     chart_card("장애인 화장실 설치 비율", fig2, height=250)
 
 with colC:
-    # 높이는 옆 카드와 동일(250), pill은 카드 폭에 맞춰 자동 축소
     ratio_card(df_sel, height=250, cols=3)
 
 # =========================
-# 하단 테이블 카드 (선택 구 기준)
+# 하단 테이블 카드
 # =========================
-tbl = df_sel.copy().rename(columns={
-    "dong": "행정동",
-    "toilets_count": "총 화장실 수",
-    "accessible_ratio": "장애인 화장실 비율",
-    "toilets_per_1k": "인구 대비 화장실 수",
-    "toilets_per_km2": "면적 당 화장실 수"
-})
-
-# 포맷팅
-tbl["장애인 화장실 비율"]   = tbl["장애인 화장실 비율"].apply(lambda x: f"{x*100:.1f}%" if pd.notna(x) else "N/A")
+tbl = df_sel.copy().rename(columns={"dong": "행정동", "toilets_count": "총 화장실 수", "accessible_ratio": "장애인 화장실 비율", "toilets_per_1k": "인구 대비 화장실 수", "toilets_per_km2": "면적 당 화장실 수"})
+tbl["장애인 화장실 비율"] = tbl["장애인 화장실 비율"].apply(lambda x: f"{x*100:.1f}%" if pd.notna(x) else "N/A")
 tbl["인구 대비 화장실 수"] = tbl["인구 대비 화장실 수"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "N/A")
-if "면적 당 화장실 수" in tbl.columns:
-    tbl["면적 당 화장실 수"] = tbl["면적 당 화장실 수"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "N/A")
+if "면적 당 화장실 수" in tbl.columns: tbl["면적 당 화장실 수"] = tbl["면적 당 화장실 수"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "N/A")
 
-# 표시 컬럼 순서
-cols_to_show = [
-    "행정동", "총 화장실 수", "장애인 화장실 비율", "인구 대비 화장실 수", "면적 당 화장실 수"
-]
-cols_to_show = [c for c in cols_to_show if c in tbl.columns]
-
+cols_to_show = [c for c in ["행정동", "총 화장실 수", "장애인 화장실 비율", "인구 대비 화장실 수", "면적 당 화장실 수"] if c in tbl.columns]
 html_table = tbl[cols_to_show].to_html(index=False, classes="", border=0, na_rep="N/A")
 
 table_html = f"""
@@ -521,21 +424,11 @@ body {{ margin:0; padding:0; background:transparent; font-family:-apple-system,B
 .table-card {{ background:#FFFFFF; border-radius:24px; padding:20px 24px 18px; font-size:13px; height:auto; box-sizing:border-box; overflow-y:auto; }}
 h3 {{ font-size:18px; font-weight:700; margin:0 0 24px 0; color:#222222; text-align:left; }}
 table {{ width:100%; border-collapse:collapse; table-layout:fixed; }}
-thead tr th {{
-  background-color:#E7E1FF; color:#374151; font-weight:600; padding:10px 12px; font-size:13px; text-align:center; position:sticky; top:0; white-space:nowrap;
-}}
+thead tr th {{ background-color:#E7E1FF; color:#374151; font-weight:600; padding:10px 12px; font-size:13px; text-align:center; position:sticky; top:0; white-space:nowrap; }}
 tbody tr td {{ border-top:1px solid #F0F1F5; padding:10px 16px; font-size:13px; color:#374151; text-align:center; white-space:nowrap; }}
 th:nth-child(1), td:nth-child(1) {{ width:18%; text-align:center; font-weight:700; }}
-th:nth-child(2), td:nth-child(2),
-th:nth-child(3), td:nth-child(3),
-th:nth-child(4), td:nth-child(4)
-th:nth-child(5), td:nth-child(5) {{ width:16%; }}
+th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) th:nth-child(5), td:nth-child(5) {{ width:16%; }}
 </style></head>
-<body>
-  <div class="table-card">
-    <h3>공중화장실 세부 현황</h3>
-    {html_table}
-  </div>
-</body></html>
+<body><div class="table-card"><h3>공중화장실 세부 현황</h3>{html_table}</div></body></html>
 """
 components.html(table_html, height=370, scrolling=True)

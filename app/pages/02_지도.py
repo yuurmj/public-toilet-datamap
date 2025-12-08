@@ -546,7 +546,65 @@ if ss.auto_detect and ss.user_location is not None:
     ).add_to(m)
 
 # ======================
-# 12. 지도 표시 및 클릭 처리
+# 12. 색상 범례
+# ======================
+legend_html = ""
+
+# 1. 장애인 화장실 구분 모드일 때
+if ss.show_disabled:
+    legend_items = f"""
+<div style="display: flex; align-items: center;">
+    <div style="width: 12px; height: 12px; background-color: #8FDAC8; border-radius: 50%; margin-right: 8px;"></div>
+    <div style="color: #4B5563;">장애인 화장실 o</div>
+</div>
+<div style="display: flex; align-items: center;">
+    <div style="width: 12px; height: 12px; background-color: #BFA9F2; border-radius: 50%; margin-right: 8px;"></div>
+    <div style="color: #4B5563;">장애인 화장실 x</div>
+</div>
+    """
+# 2. 기본 모드일 때
+else:
+    legend_items = f"""
+<div style="display: flex; align-items: center;">
+    <div style="width: 12px; height: 12px; background-color: #BFA9F2; border-radius: 50%; margin-right: 8px;"></div>
+    <div style="color: #4B5563;">공공화장실</div>
+</div>
+    """
+
+# 3. 현재 위치가 켜져 있으면 범례에 추가
+if ss.auto_detect and ss.user_location is not None:
+    legend_items += """
+<div style="display: flex; align-items: center;">
+    <div style="width: 12px; height: 12px; background-color: #9CA3AF; border-radius: 50%; margin-right: 8px;"></div>
+    <div style="color: #4B5563;">현재 위치</div>
+</div>
+    """
+
+legend_html = f"""
+<div style="
+    position: fixed; 
+    bottom: 24px; left: 24px; 
+    z-index: 1000; 
+    background-color: white; 
+    padding: 16px 20px; 
+    border-radius: 16px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+    font-size: 13px; 
+    font-family: -apple-system, sans-serif;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+">
+    {legend_items}
+</div>
+"""
+
+st.markdown(legend_html, unsafe_allow_html=True)
+
+# ======================
+# 13. 지도 표시 및 클릭 처리
 # ======================
 map_state = st_folium(
     m,
