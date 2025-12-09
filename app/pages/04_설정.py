@@ -4,7 +4,8 @@ from datetime import date
 st.set_page_config(page_title="설정", layout="wide")
 
 
-st.markdown("""<style>
+st.markdown(
+    """<style>
 header[data-testid="stHeader"] { display: none !important; }
 #MainMenu { display: none !important; }
 footer { display: none !important; }
@@ -79,12 +80,9 @@ div[data-testid="stToggle"]:nth-of-type(2) div[role="switch"][aria-checked="true
     margin: 10px 0;
     box-shadow: 0 10px 30px rgba(23, 34, 59, 0.06);
 }
-
-[data-testid="stAppViewContainer"] > .main > section {
-    padding-top: 30px !important;    /* 원하는 만큼 조절 (기본 약 60px) */
-}
-</style>""", unsafe_allow_html=True)
-
+</style>""",
+    unsafe_allow_html=True,
+)
 
 
 DEFAULT_SETTINGS = {
@@ -114,15 +112,30 @@ def render_pill(text: str, bg: str) -> str:
     </div>"""
 
 
-st.markdown("### 지도 설정 및 환경 관리")
-st.markdown("###### 지도 페이지에서도 설정할 수 있습니다")
+st.markdown(
+    "<p style='font-size:35px; font-weight:600;'>Settings</p>",
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<p style='color:#909090; font-size:18px; font-weight:500; margin-top:-25px;'>지도 페이지에서도 설정할 수 있습니다</p>",
+    unsafe_allow_html=True
+)
 
-col1, col2, col3 = st.columns([2.5, 3, 1])
-col1.markdown("**Name**")
-col2.markdown("**Description**")
-col3.markdown("**Setting**")
-st.markdown("<hr/>", unsafe_allow_html=True)
-
+st.markdown("""
+<div style="
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding-bottom: 0px;
+    margin-bottom: -5px;
+    margin-top:35px;
+">
+    <div style="flex:2.5; font-size:18px; font-weight:600; padding-left:25px;">Name</div>
+    <div style="flex:2.5; font-size:18px; font-weight:600;">Description</div>
+    <div style="flex:1; font-size:18px; font-weight:600; text-align:right; padding-right:75px;">Setting</div>
+</div>
+<hr style="margin-top:8px; margin-bottom:15px; border: 1px solid #E5E5E5;">
+""", unsafe_allow_html=True)
 
 
 with st.container():
@@ -132,23 +145,28 @@ with st.container():
 
     with colA:
         st.markdown("**계정 설정**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Account Settings</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Account Settings</span>",
+            unsafe_allow_html=True,
+        )
 
     with colB:
         st.markdown("**장애인 화장실 표시 여부**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Show accessible toilets</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Show accessible toilets</span>",
+            unsafe_allow_html=True,
+        )
 
     with colC:
-        st.markdown('<span id="toggle-show-disabled-marker"></span>', unsafe_allow_html=True)
+        st.markdown(
+            '<span id="toggle-show-disabled-marker"></span>', unsafe_allow_html=True
+        )
         real_toggle_show = st.toggle(
             "show_disabled_real",
             value=st.session_state.show_disabled,
             label_visibility="collapsed",
         )
         st.session_state.show_disabled = real_toggle_show
-
 
 
 with st.container():
@@ -158,16 +176,22 @@ with st.container():
 
     with colA:
         st.markdown("**지도/위치 설정**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Map & Location</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Map & Location</span>",
+            unsafe_allow_html=True,
+        )
 
     with colB:
         st.markdown("**현재 위치 자동 감지 여부**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Auto-detect Current Location</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Auto-detect Current Location</span>",
+            unsafe_allow_html=True,
+        )
 
     with colC:
-        st.markdown('<span id="toggle-auto-detect-marker"></span>', unsafe_allow_html=True)
+        st.markdown(
+            '<span id="toggle-auto-detect-marker"></span>', unsafe_allow_html=True
+        )
 
         real_toggle_auto = st.toggle(
             "auto_detect_real",
@@ -175,7 +199,6 @@ with st.container():
             label_visibility="collapsed",
         )
         st.session_state.auto_detect = real_toggle_auto
-
 
 
 districts = ["대연동", "감만동", "용호동", "우암동", "문현동"]
@@ -187,13 +210,17 @@ with st.container():
 
     with colA:
         st.markdown("**지도/위치 설정**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Map & Location</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Map & Location</span>",
+            unsafe_allow_html=True,
+        )
 
     with colB:
         st.markdown("**기본 지도 위치**")
-        st.markdown("<span style='font-size:13px; color:#909090;'>Default Map Center</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<span style='font-size:13px; color:#909090;'>Default Map Center</span>",
+            unsafe_allow_html=True,
+        )
 
     with colC:
         selected_center = st.selectbox(
@@ -205,8 +232,8 @@ with st.container():
         st.session_state.map_center_loc = selected_center
 
 
-
-st.markdown(f"""
+st.markdown(
+    f"""
 <div class="setting-card" style="display:flex; align-items:center;">
     <div style="flex:2.5;">
         <div style="font-weight:600;">데이터 설정</div>
@@ -220,10 +247,13 @@ st.markdown(f"""
         {render_pill("2025.11.17", "#D6F3E7")}
     </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
-st.markdown(f"""
+st.markdown(
+    f"""
 <div class="setting-card" style="display:flex; align-items:center;">
     <div style="flex:2.5;">
         <div style="font-weight:600;">언어 설정</div>
@@ -237,5 +267,6 @@ st.markdown(f"""
         {render_pill("한국어", "#E7E1FF")}
     </div>
 </div>
-""", unsafe_allow_html=True)
-
+""",
+    unsafe_allow_html=True,
+)
