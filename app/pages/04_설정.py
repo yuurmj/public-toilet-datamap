@@ -80,6 +80,13 @@ div[data-testid="stToggle"]:nth-of-type(2) div[role="switch"][aria-checked="true
     margin: 10px 0;
     box-shadow: 0 10px 30px rgba(23, 34, 59, 0.06);
 }
+
+div[data-testid="column"] > div {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
 </style>""",
     unsafe_allow_html=True,
 )
@@ -134,28 +141,29 @@ st.markdown("""
     <div style="flex:2.5; font-size:18px; font-weight:600;">Description</div>
     <div style="flex:1; font-size:18px; font-weight:600; text-align:right; padding-right:75px;">Setting</div>
 </div>
-<hr style="margin-top:8px; margin-bottom:15px; border: 1px solid #E5E5E5;">
+<hr style="margin-top:8px; margin-bottom:5px; border: 0.5px solid #E5E5E5;">
 """, unsafe_allow_html=True)
 
 
 with st.container():
     st.markdown('<div id="setting-row-1"></div>', unsafe_allow_html=True)
 
-    colA, colB, colC = st.columns([2.5, 3, 1])
+    colA, colB, colC = st.columns([2.5, 3.2, 0.8])
 
     with colA:
-        st.markdown("**계정 설정**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Account Settings</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""<div style=" height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:600; font-size:17px;">계정 설정</span>
+                <span style="font-size:13px; color:#909090;">Account Settings</span>
+            </div>""", unsafe_allow_html=True)
 
     with colB:
-        st.markdown("**장애인 화장실 표시 여부**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Show accessible toilets</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:500; font-size:17px;">장애인 화장실 표시 여부</span>
+                <span style="font-size:13px; color:#909090; margin-top:0px;">Show accessible toilets</span>
+            </div>
+        """, unsafe_allow_html=True)
+
 
     with colC:
         st.markdown(
@@ -168,25 +176,26 @@ with st.container():
         )
         st.session_state.show_disabled = real_toggle_show
 
-
 with st.container():
     st.markdown('<div id="setting-row-2"></div>', unsafe_allow_html=True)
 
-    colA, colB, colC = st.columns([2.5, 3, 1])
-
+    colA, colB, colC = st.columns([2.5, 3.2, 0.8])
+        
     with colA:
-        st.markdown("**지도/위치 설정**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Map & Location</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:600; font-size:17px;">지도/위치 설정</span>
+                <span style="font-size:13px; color:#909090; margin-top:0px;">Map & Location</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     with colB:
-        st.markdown("**현재 위치 자동 감지 여부**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Auto-detect Current Location</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:500; font-size:17px;">현재 위치 자동 감지 여부</span>
+                <span style="font-size:13px; color:#909090; margin-top:0px;">Default Map Center</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     with colC:
         st.markdown(
@@ -209,18 +218,21 @@ with st.container():
     colA, colB, colC = st.columns([2.5, 3, 1])
 
     with colA:
-        st.markdown("**지도/위치 설정**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Map & Location</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:600; font-size:17px;">지도/위치 설정</span>
+                <span style="font-size:13px; color:#909090; margin-top:0px;">Map & Location</span>
+            </div>
+        """, unsafe_allow_html=True)
 
     with colB:
-        st.markdown("**기본 지도 위치**")
-        st.markdown(
-            "<span style='font-size:13px; color:#909090;'>Default Map Center</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+            <div style="height:100%; display:flex; flex-direction:column; justify-content:center; margin-top:-10px;">
+                <span style="font-weight:500; font-size:17px;">기본 지도 위치</span>
+                <span style="font-size:13px; color:#909090; margin-top:0px;">Default Map Center</span>
+            </div>
+        """, unsafe_allow_html=True)
+
 
     with colC:
         selected_center = st.selectbox(
@@ -232,41 +244,36 @@ with st.container():
         st.session_state.map_center_loc = selected_center
 
 
-st.markdown(
-    f"""
+st.markdown(f"""
 <div class="setting-card" style="display:flex; align-items:center;">
     <div style="flex:2.5;">
-        <div style="font-weight:600;">데이터 설정</div>
-        <div style="font-size:13px; color:#909090;">Data & Language</div>
+        <div style="font-weight:600; font-size:17px;">데이터 설정</div>
+        <div style="font-size:13px; color:#909090; margin-top:0px;">Data & Language</div>
     </div>
     <div style="flex:3;">
-        <div style="font-weight:500;">데이터 최신 업데이트일 확인</div>
-        <div style="font-size:13px; color:#909090;">Last Data Update</div>
+        <div style="font-weight:500; font-size:17px;">데이터 최신 업데이트일 확인</div>
+        <div style="font-size:13px; color:#909090; margin-top:0px;">Last Data Update</div>
     </div>
     <div style="flex:1; text-align:right;">
         {render_pill("2025.11.17", "#D6F3E7")}
     </div>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 
-st.markdown(
-    f"""
+st.markdown(f"""
 <div class="setting-card" style="display:flex; align-items:center;">
     <div style="flex:2.5;">
-        <div style="font-weight:600;">언어 설정</div>
-        <div style="font-size:13px; color:#909090;">Data & Language</div>
+        <div style="font-weight:600; font-size:17px;">언어 설정</div>
+        <div style="font-size:13px; color:#909090; margin-top:0px;">Data & Language</div>
     </div>
     <div style="flex:3;">
-        <div style="font-weight:500;">언어 설정 (한국어)</div>
-        <div style="font-size:13px; color:#909090;">Language (Korean)</div>
+        <div style="font-weight:500; font-size:17px;">언어 설정 (한국어)</div>
+        <div style="font-size:13px; color:#909090; margin-top:0px;">Language (Korean)</div>
     </div>
     <div style="flex:1; text-align:right;">
         {render_pill("한국어", "#E7E1FF")}
     </div>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
+
