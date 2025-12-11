@@ -47,7 +47,7 @@
 
 ### 1. 저장소 클론
 ```bash
-git clone [https://github.com/your-repo/public-toilet-datamap.git](https://github.com/your-repo/public-toilet-datamap.git)
+git clone https://github.com/yuurmj/public-toilet-datamap.git
 cd public-toilet-datamap
 ```
 
